@@ -7,10 +7,10 @@ const checkJwt = jwt({
     cache: true,
     rateLimit: true,
     jwksRequestsPerMinute: 5,
-    jwksUri: 'https://YOUR_AUTH0_DOMAIN/.well-known/jwks.json'
+    jwksUri: `${AUTH0_DOMAIN}/.well-known/jwks.json`
   }),
-  audience: 'YOUR_API_IDENTIFIER', // TODO: Replace with your Auth0 API Identifier
-  issuer: 'https://YOUR_AUTH0_DOMAIN/', // TODO: Replace with your Auth0 Domain
+  audience: YOUR_API_IDENTIFIER,
+  issuer: AUTH0_DOMAIN,
   algorithms: ['RS256']
 });
 
