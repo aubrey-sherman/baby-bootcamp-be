@@ -25,7 +25,7 @@ sequelize.sync({ alter: true })
   .catch((error) => console.error('Error syncing database:', error));
 
 // Routes
-app.use("/eat", eatRoutes);
+app.use("/eat", checkJwt, attachUser, eatRoutes);
 // app.use("/users", usersRoutes);
 
 // Code to protect specific specific routes
