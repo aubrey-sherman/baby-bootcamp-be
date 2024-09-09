@@ -1,29 +1,32 @@
 /* Database setup for Baby Bootcamp. */
 
-import pg from 'pg';
-import { error, log } from 'console';
+import { Sequelize } from 'sequelize';
 import { getDatabaseUri } from './config.js';
 
-const { Pool } = pg;
-const databaseUri = getDatabaseUri();
+const databaseUri = getDatabaseUri();  // Your database URI from the config
 
-// Create a pool of connections
-const db = new Pool({
-  connectionString: databaseUri,
-  max: 10,  // Maximum number of connections in the pool
-  idleTimeoutMillis: 30000,  // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 2000,  // Return an error after 2 seconds if a connection cannot be established
+// Create a Sequelize instance
+const sequelize = new Sequelize(databaseUri, {
+  dialect: 'postgres',  // Specify the SQL dialect
+  logging: console.log,  // Enable logging of SQL queries for debugging; set to false to disable
+  pool: {
+    max: 10,  // Maximum number of connections in the pool
+    min: 0,  // Minimum number of connections in the pool
+    acquire: 30000,  // The maximum time, in milliseconds, that pool will try to get connection before throwing error
+    idle: 10000,  // The maximum time, in milliseconds, that a connection can be idle before being released
+  },
 });
 
-// Log successful connection
-db.on('connect', () => {
-  log(`Connected to ${databaseUri}`);
-});
+// Test the connection
+async function testConnection() {
+  try {
+    await sequelize.authenticate();
+    console.log(`Connected to ${databaseUri} successfully.`);
+  } catch (err) {
+    console.error('Unable to connect to the database:', err);
+  }
+}
 
-// Handle errors
-db.on('error', (err) => {
-  error('Unexpected error on idle client', err);
-  process.exit(-1);
-});
+testConnection();
 
-export default db;
+export default sequelize;
