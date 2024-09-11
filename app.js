@@ -6,7 +6,6 @@ import dotenv from 'dotenv';
 import sequelize from './db.js';
 import { User, FeedTimeEntry } from './models/index.js';
 import eatRoutes from './routes/eat.js';
-// import usersRoutes from './routes/users.js';
 
 import { checkJwt, attachUser } from './middleware/auth.js';
 
@@ -26,10 +25,6 @@ sequelize.sync({ alter: true })
 
 // Routes
 app.use("/eat", checkJwt, attachUser, eatRoutes);
-// app.use("/users", usersRoutes);
-
-// Code to protect specific specific routes
-// app.use('/eat', checkJwt, attachUser, eatRoutes);
 
 /** Sample route for testing */
 app.get("/", function (req, res) {
