@@ -1,8 +1,10 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../db.js';
-import User from './User.js';
+
+/** Related functions for feed time entries. */
 
 class FeedTimeEntry extends Model {
+
   static initialize(sequelize) {
     FeedTimeEntry.init({
       id: {
@@ -13,33 +15,38 @@ class FeedTimeEntry extends Model {
       userId: {
         type: DataTypes.UUID,
         allowNull: false,
-        // Remove the direct reference to the User model here
       },
       eventTime: {
         type: DataTypes.DATE,
         allowNull: false,
       },
       measurement: {
-        type: DataTypes.FLOAT,  // Assuming ounces can have decimal points
-        allowNull: false,
+        type: DataTypes.FLOAT,
+        allowNull: true,
       },
       block: {
         type: DataTypes.ENUM('Block One', 'Block Two', 'Block Three'),
         allowNull: false,
       },
       timezone: {
-        type: DataTypes.STRING,  // Store the user's timezone (e.g., 'America/New_York')
+        type: DataTypes.STRING,
         allowNull: false,
       },
     }, {
       sequelize,
-      modelName: 'TimeEntry',
-      tableName: 'time_entries',
+      modelName: 'FeedTimeEntry',
+      tableName: 'feed_time_entries',
       timestamps: true,
+      indexes: [
+        {
+          unique: true,
+          fields: ['userId', 'eventTime', 'block'],
+        }
+      ],
     });
   }
 
-  // CRUD methods...
+  // TODO: Add CRUD methods here (move out of routes!)
 }
 
 FeedTimeEntry.initialize(sequelize);
