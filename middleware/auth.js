@@ -1,51 +1,72 @@
-import { expressjwt } from 'express-jwt';
-import jwksRsa from 'jwks-rsa';
-import dotenv from 'dotenv';
-import User from '../models/User.js';
+import jwt from "jsonwebtoken";
+import { SECRET_KEY } from "../config.js";
+import { UnauthorizedError } from "../expressError.js";
 
-dotenv.config();
+/** Middleware: Authenticate user.
+ *
+ * If a token was provided, verify it, and, if valid, store the token payload
+ * on res.locals (this will include the username and isAdmin field.)
+ *
+ * It's not an error if no token was provided or if the token is not valid.
+ */
+function authenticateJWT(req, res, next) {
+  const authHeader = req.headers?.authorization;
+  if (authHeader) {
+    const token = authHeader.replace(/^[Bb]earer /, "").trim();
 
-const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN;
-const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE;
+    try {
+      res.locals.user = jwt.verify(token, SECRET_KEY);
+    } catch (err) {
+      /* ignore invalid tokens (but don't store user!) */
+    }
+  }
+  return next();
+}
 
-// Middleware to check JWT and attach user
-const checkJwt = expressjwt({
-  // Dynamically provide a signing key based on the kid in the header and the signing keys provided by the JWKS endpoint
-  secret: jwksRsa.expressJwtSecret({
-    cache: true,
-    rateLimit: true,
-    jwksRequestsPerMinute: 5,
-    jwksUri: `${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
-  }),
-  audience: `${AUTH0_AUDIENCE}`,
-  issuer: `${AUTH0_DOMAIN}`,
-  algorithms: ['RS256'],
-});
+/** Middleware to use when a user must be logged in.
+ *
+ * If no one is logged in, raises Unauthorized error.
+ */
+function ensureLoggedIn(req, res, next) {
+  if (res.locals.user?.username) return next();
+  throw new UnauthorizedError();
+}
 
-// Middleware to attach user information to the request
-const attachUser = async (req, res, next) => {
-  if (!req.auth) {  // Updated to use `req.auth` instead of `req.user`
+/** Middleware to use when they must be an admin.
+ *
+ *  Checks that user is both logged in and an admin.
+ *
+ *  If not, raises Unauthorized.
+ */
+function ensureIsAdmin(req, res, next) {
+  if (res.locals.user?.username && res.locals.user?.isAdmin === true) {
+    return next();
+  }
+  throw new UnauthorizedError();
+}
+
+/** Middleware to use to check for a logged-in admin or matching user.
+ *
+ *  Throws error to developers if there is no username in req. params.
+ *
+ * If username is not matching or not admin, raises Unauthorized.
+ */
+function ensureMatchingUserorAdmin(req, res, next) {
+
+  const currUser = res.locals.user;
+  const isAdmin = currUser?.isAdmin;
+
+  if (currUser && (
+    currUser.username === req.params.username || isAdmin === true)) {
     return next();
   }
 
-  try {
-    const auth0Id = req.auth.sub;  // `req.auth` is where the authenticated user information is now available
-    let user = await User.findOne({ where: { auth0Id } });
+  throw new UnauthorizedError();
+}
 
-    // If the user does not exist in our database, create a new record
-    if (!user) {
-      user = await User.create({
-        auth0Id,
-        email: req.auth.email,  // Assuming email is available in the token; adjust as needed
-      });
-    }
-
-    req.user = user;  // Attach the database user to the request object
-    next();
-  } catch (error) {
-    console.error('Error attaching user to request:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+export {
+  authenticateJWT,
+  ensureLoggedIn,
+  ensureIsAdmin,
+  ensureMatchingUserorAdmin
 };
-
-export { checkJwt, attachUser };
