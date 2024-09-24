@@ -10,7 +10,7 @@ class User extends Model {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
-      auth0Id: {  // This field is used to sync with Auth0
+      username: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,
