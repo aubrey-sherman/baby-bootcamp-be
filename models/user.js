@@ -92,7 +92,6 @@ class User extends Model {
   }
 }
 
-// Initialize the model
 User.initialize(sequelize);
 
 // Export the class for use in other modules
