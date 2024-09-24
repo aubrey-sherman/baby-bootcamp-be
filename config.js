@@ -1,5 +1,6 @@
 /* Configuration for application: reads the env variables and exports db URI. */
 import dotenv from 'dotenv';
+import "colors";
 
 dotenv.config();
 
@@ -9,6 +10,7 @@ export const getDatabaseUri = () => {
   const dbHost = process.env.DB_HOST || 'localhost';
   const dbPort = process.env.DB_PORT || 5432;
   const dbName = process.env.DB_NAME || 'mydatabase';
+  const SECRET_KEY = process.env.SECRET_KEY || "secret-agent-dev";
 
   return `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}`;
 };
