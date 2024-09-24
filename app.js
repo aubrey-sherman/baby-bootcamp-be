@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 
 import sequelize from './db.js';
 import { User, FeedTimeEntry } from './models/index.js';
-import eatRoutes from './routes/eat.js';
+import feedingRoutes from './routes/feedingEntries.js';
 
 import { checkJwt, attachUser } from './middleware/auth.js';
 
@@ -24,7 +24,7 @@ sequelize.sync({ alter: true })
   .catch((error) => console.error('Error syncing database:', error));
 
 // Routes
-app.use("/eat", checkJwt, attachUser, eatRoutes);
+app.use("/feedingEntries", checkJwt, attachUser, eatRoutes);
 
 /** Sample route for testing */
 app.get("/", function (req, res) {
