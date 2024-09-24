@@ -1,19 +1,26 @@
-/** Routes for baby's feeding data. */
+/** Routes for a user's feeding data. */
 
-import express from 'express';
+import jsonschema from "jsonschema";
+import { Router } from "express";
+import { BadRequestError } from "../expressError.js";
+import { ensureLoggedIn, ensureMatchingUserorAdmin } from "../middleware/auth.js";
 import { FeedTimeEntry } from '../models/index.js';
-import { checkJwt, attachUser } from '../middleware/auth.js';
 
-const router = express.Router();
+import compFilterSchema from "../schemas/compFilter.json" with { type: "json" };
+import compNewSchema from "../schemas/compNew.json" with { type: "json" };
+import compUpdateSchema from "../schemas/compUpdate.json" with { type: "json" };
+
+const router = Router.Router();
 
 // FIXME: Remove try/catch format in routes and pattern match to Exp J example
+// FIXME: Change URL architecture and endpoints to users/username/entries/entry-id
 
 /** GET  / =>
  *    { entries: [ { userId, eventTime, measurement, block, timezone }, ...]}
  *
- * Authorization required: authenticated user
+ * Authorization required: user is logged in
 */
-router.get('/', checkJwt, attachUser, async (req, res) => {
+router.get('/', ensureLoggedIn, ensureMatchingUserorAdmin, async (req, res) => {
   try {
   const user = req.user;
   if (!user) {
@@ -41,9 +48,9 @@ router.get('/', checkJwt, attachUser, async (req, res) => {
  *
  * Returns { userId, eventTime, measurement, block, timezone }
  *
- * Authorization required: Auth0 authenticated user
+ * Authorization required: authenticated user
 */
-router.post('/', checkJwt, attachUser, async (req, res) => {
+router.post('/', ensureLoggedIn, ensureMatchingUserorAdmin, async (req, res) => {
   try {
     const user = req.user;
     const { eventTime, measurement, block, timezone } = req.body;
@@ -70,8 +77,11 @@ router.post('/', checkJwt, attachUser, async (req, res) => {
 });
 
 
-/** PATCH */
-router.patch('/:id', checkJwt, attachUser, async (req, res) => {
+/** PATCH
+ *
+ * Authentication required: authenticated user
+*/
+router.patch('/:id', ensureLoggedIn, ensureMatchingUserorAdmin, async (req, res) => {
 
   try {
     const user = req.user;
