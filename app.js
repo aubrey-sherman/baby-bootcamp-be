@@ -1,21 +1,27 @@
 import express from 'express';
-import { NotFoundError } from './expressError.js';
 import cors from 'cors';
+
+import { NotFoundError } from './expressError.js';
 import dotenv from 'dotenv';
+import { authenticateJWT } from "./middleware/auth.js";
+import authRoutes from "./routes/auth.js";
+import feedingRoutes from './routes/feedingEntries.js';
+import usersRoutes from './routes/users.js';
 
 import sequelize from './db.js';
-import { User, FeedTimeEntry } from './models/index.js';
-import feedingRoutes from './routes/feedingEntries.js';
-
-import { checkJwt, attachUser } from './middleware/auth.js';
+// import { User, FeedTimeEntry } from './models/index.js';
 
 dotenv.config();
+
+import morgan from "morgan";
 
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(morgan("tiny"));
+app.use(authenticateJWT);
 app.use(express.urlencoded({ extended: true }));
 
 // Sync models with the database
@@ -24,12 +30,14 @@ sequelize.sync({ alter: true })
   .catch((error) => console.error('Error syncing database:', error));
 
 // Routes
-app.use("/feedingEntries", checkJwt, attachUser, eatRoutes);
+app.use("/auth", authRoutes);
+app.use("/users", usersRoutes);
+app.use("/feedingEntries", feedingRoutes);
 
-/** Sample route for testing */
-app.get("/", function (req, res) {
-  return res.send(`Hello from the backend!`);
-});
+// /** Sample route for testing */
+// app.get("/", function (req, res) {
+//   return res.send(`Hello from the backend!`);
+// });
 
 /** Handle 404 errors -- this matches everything */
 app.use(function (req, res, next) {

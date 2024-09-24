@@ -3,7 +3,7 @@
 import jsonschema from "jsonschema";
 import { Router } from "express";
 
-import User from "../models/user.js";
+import { User } from '../models/index.js';
 import { createToken } from "../helpers/tokens.js";
 import userAuthSchema from "../schemas/userAuth.json" with { type: "json" };
 import userRegisterSchema

@@ -6,11 +6,9 @@ import { BadRequestError } from "../expressError.js";
 import { ensureLoggedIn, ensureMatchingUserorAdmin } from "../middleware/auth.js";
 import { FeedTimeEntry } from '../models/index.js';
 
-import compFilterSchema from "../schemas/compFilter.json" with { type: "json" };
-import compNewSchema from "../schemas/compNew.json" with { type: "json" };
-import compUpdateSchema from "../schemas/compUpdate.json" with { type: "json" };
+// TODO: add JSON schemda for entries - creating and updating
 
-const router = Router.Router();
+const router = Router();
 
 // FIXME: Remove try/catch format in routes and pattern match to Exp J example
 

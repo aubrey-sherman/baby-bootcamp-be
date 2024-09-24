@@ -1,5 +1,5 @@
 import sequelize from '../db.js';
-import User from './User.js';
+import User from './user.js';
 import FeedTimeEntry from './feedTimeEntry.js';
 
 // Initialize models

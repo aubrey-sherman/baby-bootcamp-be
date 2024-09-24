@@ -5,12 +5,11 @@ import { Router } from "express";
 
 import {
   ensureLoggedIn,
-  ensureIsAdmin,
   ensureMatchingUserorAdmin
 } from "../middleware/auth.js";
 
 import { BadRequestError } from "../expressError.js";
-import User from "../models/user.js";
+import { User } from "../models/index.js";
 import { createToken } from "../helpers/tokens.js";
 
 import userNewSchema from "../schemas/userNew.json" with { type: "json" };
@@ -30,7 +29,7 @@ const router = Router();
  * Authorization required: user must be logged in AND an admin
  **/
 
-router.post("/", ensureIsAdmin, async function (req, res) {
+router.post("/", ensureLoggedIn, ensureMatchingUserorAdmin, async function (req, res) {
   const validator = jsonschema.validate(
     req.body,
     userNewSchema,
@@ -54,7 +53,7 @@ router.post("/", ensureIsAdmin, async function (req, res) {
  * Authorization required: login AND admin
  **/
 
-router.get("/", ensureIsAdmin, async function (req, res) {
+router.get("/", ensureLoggedIn, ensureMatchingUserorAdmin, async function (req, res) {
   const users = await User.findAll();
   return res.json({ users });
 });
@@ -68,7 +67,7 @@ router.get("/", ensureIsAdmin, async function (req, res) {
  **/
 
 router
-  .get("/:username", ensureMatchingUserorAdmin, async function (req, res) {
+  .get("/:username", ensureLoggedIn, ensureMatchingUserorAdmin, async function (req, res) {
     const user = await User.get(req.params.username);
     return res.json({ user });
   });
