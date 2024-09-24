@@ -7,7 +7,7 @@ const databaseUri = getDatabaseUri();  // Your database URI from the config
 
 // Create a Sequelize instance
 const sequelize = new Sequelize(databaseUri, {
-  dialect: 'postgres',  // Specify the SQL dialect
+  dialect: 'postgres',
   logging: console.log,  // Enable logging of SQL queries for debugging; set to false to disable
   pool: {
     max: 10,  // Maximum number of connections in the pool
