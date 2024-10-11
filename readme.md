@@ -1,7 +1,10 @@
-# Express JS Starter
+WIP
 
+### How to run the app locally
 
-Run `npm install` and then `npm run ...`:
+1. Run `npm install` to install dependencies
+
+2. Run `npm run <add command from options below>`
 
 | Command     | Description          |
 |-------------|----------------------|
