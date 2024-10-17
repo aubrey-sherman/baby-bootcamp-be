@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { check, pgTable, varchar, text } from "drizzle-orm/pg-core";
 
-export const usersTable = pgTable(
+export const users = pgTable(
   "users",
   {
     username: varchar("username", { length: 50 }).primaryKey(),
