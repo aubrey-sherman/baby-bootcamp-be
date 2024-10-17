@@ -1,8 +1,9 @@
 import jwt from "jsonwebtoken";
 import  { SECRET_KEY } from "../../config.js";
 
-// NOTE: Can improve documentation by specifying shape/content of user data.
 /** Returns signed JWT {username, isAdmin} from user data. */
+
+// TODO: Add type for user
 
 function createToken(user)  {
   let payload = {
