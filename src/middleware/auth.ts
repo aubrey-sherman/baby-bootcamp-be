@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
-import { SECRET_KEY } from "../../config.js";
-import { UnauthorizedError } from "../../expressError.js";
+import { SECRET_KEY } from "../../config.ts";
+import { UnauthorizedError } from "../expressError.ts";
 
 /** Middleware: Authenticate user.
  *

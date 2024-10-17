@@ -2,9 +2,9 @@
 
 import jsonschema from "jsonschema";
 import { Router } from "express";
-import { BadRequestError } from "../../expressError.js";
-import { ensureLoggedIn, ensureMatchingUserorAdmin } from "../middleware/auth.js";
-import { FeedTimeEntry } from '../../models/index.js';
+import { BadRequestError } from "../expressError.ts";
+import { ensureLoggedIn, ensureMatchingUserorAdmin } from "../middleware/auth.ts";
+// import { FeedTimeEntry } from '../../models/index.js';
 
 // TODO: add JSON schemda for entries - creating and updating
 

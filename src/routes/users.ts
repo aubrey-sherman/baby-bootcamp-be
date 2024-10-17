@@ -6,14 +6,14 @@ import { Router } from "express";
 import {
   ensureLoggedIn,
   ensureMatchingUserorAdmin
-} from "../middleware/auth.js";
+} from "../middleware/auth.ts";
 
-import { BadRequestError } from "../expressError.js";
-import { User } from "../models/index.js";
-import { createToken } from "../helpers/tokens.js";
+import { BadRequestError } from "../expressError.ts";
+// import { User } from "../models/index.ts";
+import { createToken } from "../helpers/tokens.ts";
 
-import userNewSchema from "../schemas/userNew.json" with { type: "json" };
-import userUpdateSchema from "../schemas/userUpdate.json" with { type: "json" };
+// import userNewSchema from "../schemas/userNew.json" with { type: "json" };
+// import userUpdateSchema from "../schemas/userUpdate.json" with { type: "json" };
 
 const router = Router();
 

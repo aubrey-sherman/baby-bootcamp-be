@@ -3,11 +3,11 @@
 import jsonschema from "jsonschema";
 import { Router } from "express";
 
-import { User } from '../models/index.js';
-import { createToken } from "../helpers/tokens.js";
-import userAuthSchema from "../schemas/userAuth.json" with { type: "json" };
-import userRegisterSchema
-  from "../schemas/userRegister.json" with { type: "json" };
+// import { User } from '../models/index.ts';
+import { createToken } from "../helpers/tokens.ts";
+// import userAuthSchema from "../schemas/userAuth.json" with { type: "json" };
+// import userRegisterSchema
+//   from "../schemas/userRegister.json" with { type: "json" };
 import { BadRequestError } from "../expressError.js";
 
 const router = new Router();
