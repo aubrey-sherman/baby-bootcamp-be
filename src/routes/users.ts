@@ -1,7 +1,8 @@
 /** Routes for users. */
 
 import jsonschema from "jsonschema";
-import { Router } from "express";
+import { Router, Request, Response } from "express";
+import { }
 
 import {
   ensureLoggedIn,
