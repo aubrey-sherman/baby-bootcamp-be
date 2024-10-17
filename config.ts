@@ -18,7 +18,7 @@ const BCRYPT_WORK_FACTOR = process.env.NODE_ENV === "test" ? 1 : 12;
 
 if (process.env.NODE_ENV !== "test") {
   console.log(`
-${"Jobly Config:".green}
+${"Baby Bootcamp Config:".green}
 ${"NODE_ENV:".yellow}           ${process.env.NODE_ENV}
 ${"SECRET_KEY:".yellow}         ${SECRET_KEY}
 ${"PORT:".yellow}               ${PORT}
