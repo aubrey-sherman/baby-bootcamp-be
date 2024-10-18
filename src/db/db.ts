@@ -8,4 +8,4 @@ const databaseUri = getDatabaseUri();
 
 const db = await drizzle("node-postgres", databaseUri!);
 
-export default db;
+export { db };
