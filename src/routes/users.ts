@@ -2,27 +2,26 @@
 
 import jsonschema from "jsonschema";
 import { Router, Request, Response } from "express";
-import { }
 
 import {
   ensureLoggedIn,
   ensureMatchingUserorAdmin
 } from "../middleware/auth.ts";
+import User from '../db/models/user.ts';
 
 import { BadRequestError } from "../expressError.ts";
-// import { User } from "../models/index.ts";
 import { createToken } from "../helpers/tokens.ts";
 
-// import userNewSchema from "../schemas/userNew.json" with { type: "json" };
-// import userUpdateSchema from "../schemas/userUpdate.json" with { type: "json" };
+import userAuthSchema from '../jsonSchema/userAuth.json';
+import userNewSchema from '../jsonSchema/userNew.json';
+import userRegisterSchema from '../jsonSchema/userRegister.json';
 
 const router = Router();
 
 /** POST / { user }  => { user, token }
  *
  * Adds a new user. This is not the registration endpoint --- instead, this is
- * only for admin users to add new users. The new user being added can be an
- * admin.
+ * only for admin users to add new users.
  *
  * This returns the newly created user and an authentication token for them:
  *  {user: { username, firstName, lastName, email, isAdmin }, token }
