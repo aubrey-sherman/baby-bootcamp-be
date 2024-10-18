@@ -4,6 +4,8 @@
       "strict": true,
       "module": "ESNext",
       "skipLibCheck": true,
+      "resolveJsonModule": true,
+      "esModuleInterop": true,
       "moduleResolution": "Node",
       "allowSyntheticDefaultImports": true,
       "noEmit": true,
