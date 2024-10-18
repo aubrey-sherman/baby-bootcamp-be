@@ -51,7 +51,7 @@ function ensureIsAdmin(req, res, next) {
  *
  * If username is not matching or not admin, raises Unauthorized.
  */
-function ensureMatchingUserorAdmin(req, res, next) {
+function ensureMatchingUser(req, res, next) {
 
   const currUser = res.locals.user;
   const isAdmin = currUser?.isAdmin;
@@ -67,6 +67,4 @@ function ensureMatchingUserorAdmin(req, res, next) {
 export {
   authenticateJWT,
   ensureLoggedIn,
-  ensureIsAdmin,
-  ensureMatchingUserorAdmin
 };
