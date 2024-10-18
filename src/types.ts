@@ -1,4 +1,4 @@
-interface RegisterParams {
+type tUser = {
   username: string;
   password: string;
   firstName: string;
@@ -6,4 +6,11 @@ interface RegisterParams {
   email: string;
 }
 
-export { RegisterParams };
+type tFeedingEntryParams = {
+  volumeInOunces: number;
+  eliminating: boolean;
+  feeding_time: Date;
+  username: string;
+}
+
+export { tUser, tFeedingEntryParams };
