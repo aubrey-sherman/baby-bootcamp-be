@@ -14,3 +14,5 @@ export const users = pgTable(
       checkConstraint: check("email", sql`position('@' IN email) > 1`),
     })
 );
+
+// TODO: Check line 13 for correct check constraint syntax

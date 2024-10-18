@@ -1,4 +1,4 @@
-import "dotenv/config";
+// import "dotenv/config";
 import express from 'express';
 import cors from 'cors';
 
@@ -8,8 +8,6 @@ import { authenticateJWT } from './middleware/auth.ts';
 import authRoutes from "./routes/auth.ts";
 import feedingRoutes from './routes/feedingEntries.ts';
 import usersRoutes from './routes/users.ts';
-
-// import { User, FeedTimeEntry } from './models/index.js';
 
 dotenv.config();
 
