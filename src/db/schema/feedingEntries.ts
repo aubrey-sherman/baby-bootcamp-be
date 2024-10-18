@@ -1,7 +1,7 @@
 import { pgTable, boolean, serial, text, doublePrecision, timestamp } from "drizzle-orm/pg-core";
-import { users } from "../schema/users.ts";
+import { users } from "./users.ts";
 
-export const feedEntries = pgTable("feed_entries", {
+export const feedingEntries = pgTable("feeding_entries", {
   id: serial("id").primaryKey(),
   volume_in_oz: doublePrecision(),
   eliminating: boolean().notNull(),
