@@ -6,10 +6,11 @@ import { Router } from "express";
 import User from '../db/models/user.ts';
 import { createToken } from "../helpers/tokens.ts";
 import userNewSchema from '../jsonSchema/userNew.json';
+import userAuthSchema from '../jsonSchema/userAuth.json';
 import userRegisterSchema from '../jsonSchema/userRegister.json';
 import { BadRequestError } from "../expressError.js";
 
-const router = new Router();
+const router = Router();
 
 
 /** POST /auth/token:  { username, password } => { token }
