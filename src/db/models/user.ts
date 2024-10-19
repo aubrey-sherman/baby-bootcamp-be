@@ -18,7 +18,7 @@ class User {
 
   /** Authenticate user with username and password.
    *
-   * Returns { username, first_name, last_name, email }
+   * Returns { username, firstName, lastName, email }
    *
    * Throws UnauthorizedError if user not found or password is wrong.
    */
@@ -28,9 +28,10 @@ class User {
       .select({
         username: users.username,
         password: users.password,
-        first_name: users.first_name,
-        last_name: users.last_name,
-        email: users.email
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        babyName: users.babyName
   })
       .from(users)
       .where(eq(users.username, username))
@@ -44,9 +45,10 @@ class User {
         if (isValidPassword === true) {
           return {
             username: user.username,
-            firstName: user.first_name,
-            lastName: user.last_name,
+            firstName: user.firstName,
+            lastName: user.lastName,
             email: user.email,
+            babyName: user.babyName
         };
         }
       }
@@ -61,7 +63,7 @@ class User {
    * Throws BadRequestError on duplicates.
    **/
   static async register(
-    { username, password, firstName, lastName, email }: tUser): Promise<User> {
+    { username, password, firstName, lastName, email, babyName }: tUser): Promise<User> {
     console.debug('Backend register function running')
     const duplicateCheck = await db
       .select({ username: users.username })
@@ -82,15 +84,17 @@ class User {
         {
           username,
           password: hashedPassword,
-          first_name: firstName,
-          last_name: lastName,
+          firstName,
+          lastName,
           email,
+          babyName
         })
         .returning({
           username: users.username,
-          first_name: users.first_name,
-          last_name: users.last_name,
-          email: users.email
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          babyName: users.babyName
         })
         .execute();
 
@@ -101,23 +105,24 @@ class User {
 
   /** Given a username, return data about user.
    *
-   * Returns { username, first_name, last_name, email, feedEntries[] }
+   * Returns { username, firstName, lastName, email, feedEntries[] }
    *   where feedEntry is { id, volume_in_oz, eliminating, feeding_time, username }
    *
    * Throws NotFoundError if user not found.
    **/
   static async get(username: string): Promise<User> {
-    const userRes = await db
-      .select(
-        users.username,
-        users.first_name,
-        users.last_name,
-        users.email,
-      )
+    const userResult = await db
+      .select({
+        username: users.username,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        babyName: users.babyName
+    })
       .from(users)
       .where(eq(users.username, username));
 
-    const user = userRes.rows[0];
+    const user = userResult[0];
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
 
