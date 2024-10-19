@@ -10,11 +10,7 @@ class FeedingEntry {
 
   static async create(
     { volumeInOunces, eliminating, feeding_time, username }: FeedingEntryParams) {
-    const newEntry = await db.insert(feedingEntries).values(
-      {
 
-      }
-    )
   }
 
   /**  */
