@@ -25,39 +25,25 @@ function authenticateJWT(req, res, next) {
 
 /** Middleware to use when a user must be logged in.
  *
- * If no one is logged in, raises Unauthorized error.
+ * If no user is logged in, raises Unauthorized error.
  */
 function ensureLoggedIn(req, res, next) {
   if (res.locals.user?.username) return next();
   throw new UnauthorizedError();
 }
 
-/** Middleware to use when they must be an admin.
+/** Middleware to use when user must provide a valid token and match the username
+ * of the requested route.
+*
+ * If username is not matching, raises Unauthorized.
  *
- *  Checks that user is both logged in and an admin.
- *
- *  If not, raises Unauthorized.
- */
-function ensureIsAdmin(req, res, next) {
-  if (res.locals.user?.username && res.locals.user?.isAdmin === true) {
-    return next();
-  }
-  throw new UnauthorizedError();
-}
-
-/** Middleware to use to check for a logged-in admin or matching user.
- *
- *  Throws error to developers if there is no username in req. params.
- *
- * If username is not matching or not admin, raises Unauthorized.
+ * Throws error to developers if there is no username in request params.
  */
 function ensureMatchingUser(req, res, next) {
 
-  const currUser = res.locals.user;
-  const isAdmin = currUser?.isAdmin;
+  const currentUser = res.locals.user;
 
-  if (currUser && (
-    currUser.username === req.params.username || isAdmin === true)) {
+  if (currentUser && (currentUser.username === req.params.username)) {
     return next();
   }
 
@@ -67,4 +53,5 @@ function ensureMatchingUser(req, res, next) {
 export {
   authenticateJWT,
   ensureLoggedIn,
+  ensureMatchingUser
 };
