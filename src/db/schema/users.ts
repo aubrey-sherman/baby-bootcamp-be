@@ -4,11 +4,12 @@ import { check, pgTable, varchar, text } from "drizzle-orm/pg-core";
 export const users = pgTable(
   "users",
   {
-    username: varchar("username", { length: 50 }).primaryKey(),
+    username: varchar( { length: 50 }).primaryKey(),
     password: text().notNull(),
-    first_name: varchar({ length: 100 }).notNull(),
-    last_name: varchar({ length: 100 }).notNull(),
-    email: text("email").notNull().unique(),
+    firstName: varchar('first_name', { length: 100 }).notNull(),
+    lastName: varchar('last_name', { length: 100 }).notNull(),
+    email: text().notNull().unique(),
+    babyName: varchar('baby_name', { length: 100}).notNull()
   },
   (table) => ({
       checkConstraint: check("email", sql`position('@' IN email) > 1`),
