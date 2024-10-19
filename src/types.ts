@@ -4,12 +4,13 @@ type tUser = {
   firstName: string;
   lastName: string;
   email: string;
+  babyName: string;
 }
 
 type tFeedingEntryParams = {
   volumeInOunces: number;
   eliminating: boolean;
-  feeding_time: Date;
+  feedingTime: Date;
   username: string;
 }
 
