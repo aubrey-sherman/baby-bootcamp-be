@@ -3,10 +3,7 @@
 import jsonschema from "jsonschema";
 import { Router, Request, Response } from "express";
 
-import {
-  ensureLoggedIn,
-  ensureMatchingUserorAdmin
-} from "../middleware/auth.ts";
+import { ensureLoggedIn, ensureMatchingUser } from "../middleware/auth.ts";
 import User from '../db/models/user.ts';
 
 import { BadRequestError } from "../expressError.ts";
@@ -25,11 +22,11 @@ const router = Router();
  *
  * This returns the newly created user and an authentication token for them:
  *  {user: { username, firstName, lastName, email, isAdmin }, token }
- *
+
  * Authorization required: user must be logged in AND an admin
  **/
 
-router.post("/", ensureLoggedIn, ensureMatchingUserorAdmin, async function (req, res) {
+router.post("/", ensureLoggedIn, async function (req, res) {
   const validator = jsonschema.validate(
     req.body,
     userNewSchema,
@@ -49,26 +46,20 @@ router.post("/", ensureLoggedIn, ensureMatchingUserorAdmin, async function (req,
 /** GET / => { users: [ {username, firstName, lastName, email }, ... ] }
  *
  * Returns list of all users.
- *
- * Authorization required: login AND admin
  **/
-
-router.get("/", ensureLoggedIn, ensureMatchingUserorAdmin, async function (req, res) {
-  const users = await User.findAll();
-  return res.json({ users });
-});
 
 
 /** GET /[username] => { user }
  *
- * Returns { username, firstName, lastName, email, isAdmin }
+ * Returns { username, firstName, lastName, email, feedingEntries[]}
  *
- * Authorization required: login AND admin or matching user
+ * Authorization required: same user as :username in request params.
  **/
 
 router
-  .get("/:username", ensureLoggedIn, ensureMatchingUserorAdmin, async function (req, res) {
+  .get("/:username", ensureMatchingUser, async function (req, res) {
     const user = await User.get(req.params.username);
+
     return res.json({ user });
   });
 
@@ -83,39 +74,11 @@ router
  * Authorization required: login AND admin or matching user
  **/
 
-router
-  .patch(
-    "/:username",
-    ensureMatchingUserorAdmin,
-    async function (req, res) {
-      const validator = jsonschema.validate(
-        req.body,
-        userUpdateSchema,
-        { required: true },
-      );
-      if (!validator.valid) {
-        const errs = validator.errors.map(e => e.stack);
-        throw new BadRequestError(errs);
-      }
-
-      const user = await User.update(req.params.username, req.body);
-      return res.json({ user });
-    });
-
 
 /** DELETE /[username]  =>  { deleted: username }
  *
  * Authorization required: login AND admin or matching user
  **/
-
-router
-  .delete(
-    "/:username",
-    ensureMatchingUserorAdmin,
-    async function (req, res) {
-      await User.remove(req.params.username);
-      return res.json({ deleted: req.params.username });
-    });
 
 
 export default router;
