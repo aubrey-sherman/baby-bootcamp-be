@@ -3,8 +3,8 @@ import { users } from "./users.ts";
 
 export const feedingEntries = pgTable("feeding_entries", {
   id: serial("id").primaryKey(),
-  volume_in_oz: doublePrecision(),
+  volumeInOunces: doublePrecision('volume_in_ounces'),
   eliminating: boolean().notNull(),
-  feeding_time: timestamp("feeding_time").defaultNow(),
+  feedingTime: timestamp("feeding_time").defaultNow(),
   username: text("username").references(() => users.username),
 });
