@@ -16,18 +16,23 @@
     "firstName": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 30
+      "maxLength": 100
     },
     "lastName": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 30
+      "maxLength": 100
     },
     "email": {
       "type": "string",
       "minLength": 6,
-      "maxLength": 60,
+      "maxLength": 100,
       "format": "email"
+    },
+    "babyName": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 100
     }
   },
   "additionalProperties": false,
@@ -36,6 +41,7 @@
     "firstName",
     "lastName",
     "password",
-    "email"
+    "email",
+    "babyName"
   ]
 }
