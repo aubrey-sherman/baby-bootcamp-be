@@ -1,10 +1,24 @@
-import { pgTable, boolean, serial, text, doublePrecision, timestamp } from "drizzle-orm/pg-core";
-import { users } from "./users.ts";
+import { pgTable, uuid, doublePrecision, timestamp, index } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm';
+import { feedingBlocks } from "./feedingBlocks.ts";
 
+/** Represents a feeding entry associated with a block. */
 export const feedingEntries = pgTable("feeding_entries", {
-  id: serial("id").primaryKey(),
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  feedingTime: timestamp('feeding_time').notNull(),
   volumeInOunces: doublePrecision('volume_in_ounces'),
-  eliminating: boolean().notNull(),
-  feedingTime: timestamp("feeding_time").defaultNow(),
-  username: text("username").references(() => users.username),
-});
+  blockId: uuid('block_id')
+      .references(() => feedingBlocks.id, {
+        onDelete: "cascade", // If a feeding block is deleted, delete its entries
+        onUpdate: "cascade", // If a feeding block's ID is updated, cascade the update
+      })
+      .notNull(),
+  },
+  (table) => ({
+    // Index on blockId for optimized queries
+    indexBlockId: index('idx_feeding_entries_block_id').on(table.blockId),
+
+    // Table-level check constraint to ensure volumeInOunces is positive
+    checkVolumePositive: sql`volume_in_ounces > 0`,
+  })
+);
