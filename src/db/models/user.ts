@@ -11,6 +11,7 @@ import {
 } from '../../expressError.ts';
 import { tUser } from '../../types.ts';
 import { BCRYPT_WORK_FACTOR } from "../../../config";
+import { feedingBlocks } from '../schema/feedingBlocks.ts';
 
 /** Related functions for users. */
 
@@ -18,7 +19,7 @@ class User {
 
   /** Authenticate user with username and password.
    *
-   * Returns { username, firstName, lastName, email }
+   * Returns { username, firstName, lastName, email, babyName, feedingBlocks[] }
    *
    * Throws UnauthorizedError if user not found or password is wrong.
    */
