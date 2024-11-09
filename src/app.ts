@@ -6,7 +6,7 @@ import { NotFoundError } from './expressError.ts';
 import dotenv from 'dotenv';
 import { authenticateJWT } from './middleware/auth.ts';
 import authRoutes from "./routes/auth.ts";
-import feedingRoutes from './routes/feedingEntries.ts';
+import feedingRoutes from './routes/feedingRoutes.ts'
 import usersRoutes from './routes/users.ts';
 
 dotenv.config();
@@ -25,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/auth", authRoutes);
 app.use("/users", usersRoutes);
-app.use("/feedingEntries", feedingRoutes);
+app.use("/feedingRoutes", feedingRoutes);
 
 /** Handle 404 errors -- this matches everything */
 app.use(function (req, res, next) {
