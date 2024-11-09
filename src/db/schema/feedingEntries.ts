@@ -21,4 +21,4 @@ export const feedingEntries = pgTable("feeding_entries", {
     // Table-level check constraint to ensure volumeInOunces is positive
     checkVolumePositive: sql`volume_in_ounces > 0`,
   })
-);
+)
