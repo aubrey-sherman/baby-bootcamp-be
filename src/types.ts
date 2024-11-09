@@ -30,7 +30,7 @@ interface UserType {
   updatedAt: Date;
   feedingBlocks?: FeedingBlock[];
 }
-interface UserWithBlocks extends User {
+interface UserWithBlocks extends tUser {
   feedingBlocks: FeedingBlock[];
 }
 
