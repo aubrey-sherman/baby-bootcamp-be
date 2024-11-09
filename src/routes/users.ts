@@ -2,9 +2,13 @@
 
 import jsonschema from "jsonschema";
 import { Router, Request, Response } from "express";
-
+import { db } from "../db/db.ts";
 import { ensureLoggedIn, ensureMatchingUser } from "../middleware/auth.ts";
+import { eq } from 'drizzle-orm';
 import User from '../db/models/user.ts';
+import { feedingBlocks } from "../db/schema/feedingBlocks.ts";
+import { UserType, UserWithBlocks } from '../types.ts';
+
 
 import { BadRequestError } from "../expressError.ts";
 import { createToken } from "../helpers/tokens.ts";
@@ -43,24 +47,31 @@ router.post("/", ensureLoggedIn, async function (req, res) {
 });
 
 
-/** GET / => { users: [ {username, firstName, lastName, email }, ... ] }
- *
- * Returns list of all users.
- **/
-
-
 /** GET /[username] => { user }
  *
- * Returns { username, firstName, lastName, email, feedingEntries[]}
+ * Returns { username, firstName, lastName, email, babyName, feedingBlocks[]}
  *
  * Authorization required: same user as :username in request params.
  **/
-
 router
   .get("/:username", ensureMatchingUser, async function (req, res) {
-    const user = await User.get(req.params.username);
+    const { username } = req.params;
+    const fetchedUser = await User.get(username);
 
-    return res.json({ user });
+    const blocksResult = await db
+      .select()
+      .from(feedingBlocks)
+      .where(eq(feedingBlocks.username, username))
+      .execute();
+
+    const blocks = blocksResult;
+
+    const userWithBlocks: UserWithBlocks = {
+      ...fetchedUser,
+      feedingBlocks: blocks,
+    };
+
+    res.json(fetchedUser);
   });
 
 
