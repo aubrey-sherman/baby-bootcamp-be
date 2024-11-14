@@ -9,7 +9,7 @@ import {
   NotFoundError,
   UnauthorizedError,
 } from '../../expressError.ts';
-import { tUser } from '../../types.ts';
+import { IUser, RegisterParams } from '../../types.ts';
 import { BCRYPT_WORK_FACTOR } from "../../../config";
 import { feedingBlocks } from '../schema/feedingBlocks.ts';
 
@@ -23,7 +23,7 @@ class User {
    *
    * Throws UnauthorizedError if user not found or password is wrong.
    */
-  static async authenticate(username: string, password: string): Promise<User> {
+  static async authenticate(username: string, password: string): Promise<IUser> {
 
     const result = await db
       .select({
@@ -64,8 +64,10 @@ class User {
    * Throws BadRequestError on duplicates.
    **/
   static async register(
-    { username, password, firstName, lastName, email, babyName }: tUser): Promise<User> {
+    { username, password, firstName, lastName, email, babyName }: RegisterParams
+  ): Promise<IUser> {
     console.debug('Backend register function running')
+
     const duplicateCheck = await db
       .select({ username: users.username })
       .from(users)
@@ -106,8 +108,7 @@ class User {
 
   /** Given a username, return data about user.
    *
-   * Returns { username, firstName, lastName, email, feedEntries[] }
-   *   where feedEntry is { id, volume_in_oz, eliminating, feeding_time, username }
+   * Returns { username, firstName, lastName, email, babyName }
    *
    * Throws NotFoundError if user not found.
    **/
