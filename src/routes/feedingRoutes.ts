@@ -11,15 +11,16 @@ router.use(ensureLoggedIn);
 
 /** Routes for feeding blocks */
 
-/** POST /feeding-blocks - Create a new feeding block
+/** POST /feeding-routes/blocks - Create a new feeding block
  *
  * Authorization required: valid token
  *
- * Required fields: { number }
  * Optional fields: { isEliminating }
  *
- * Returns: { block: { id, number, isEliminating, username } }
-*/
+ * Returns: { block: { id, position, isEliminating, username } }
+ *
+ * Note: Position is automatically assigned by the backend
+ */
 router.post('/blocks', async (req, res, next) => {
   try {
     const block = await FeedingBlock.create({
@@ -33,7 +34,7 @@ router.post('/blocks', async (req, res, next) => {
   }
 });
 
-/** GET /feeding-blocks - Get all feeding blocks for current user
+/** GET /blocks/:username - Get all feeding blocks for current user
  *
  * Authorization required: valid token
  *
@@ -54,14 +55,14 @@ router.get('/blocks', async (req, res, next) => {
  *
  * Returns: { block: { id, number, isEliminating, username } }
 */
-router.get('/blocks/:id', async (req, res, next) => {
-  try {
-    const block = await FeedingBlock.getById(req.params.id, res.locals.user.username);
-    return res.json({ block });
-  } catch (err) {
-    return next(err);
-  }
-});
+// router.get('/blocks/:id', async (req, res, next) => {
+//   try {
+//     const block = await FeedingBlock.getById(req.params.id, res.locals.user.username);
+//     return res.json({ block });
+//   } catch (err) {
+//     return next(err);
+//   }
+// });
 
 /** PATCH /feeding-blocks/:id - Update feeding block
  *
@@ -92,8 +93,13 @@ router.patch('/blocks/:id', async (req, res, next) => {
 */
 router.delete('/blocks/:id', async (req, res, next) => {
   try {
-    await FeedingBlock.delete(req.params.id, res.locals.user.username);
-    return res.json({ deleted: req.params.id });
+    const username = res.locals.user.username
+    const deletedId = await FeedingBlock.delete(
+      req.params.id,
+      username
+    );
+
+    return res.json({ deleted: deletedId });
   } catch (err) {
     return next(err);
   }
