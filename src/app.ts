@@ -25,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/auth", authRoutes);
 app.use("/users", usersRoutes);
-app.use("/feedingRoutes", feedingRoutes);
+app.use("/feeding-routes", feedingRoutes);
 
 /** Handle 404 errors -- this matches everything */
 app.use(function (req, res, next) {
