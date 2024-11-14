@@ -5,7 +5,7 @@
   "main": "./src/server.ts",
   "type": "module",
   "scripts": {
-    "start": "node server.ts",
+    "start": "npx tsx src/server.ts",
     "test": "vitest",
     "test:cov": "vitest --coverage"
   },
