@@ -37,15 +37,14 @@ type FeedingBlock = {
   isEliminating: boolean;
 };
 
-type UserWithBlocks = IUser & {
-  feedingBlocks: FeedingBlock[];
-};
+// type UserWithBlocks = IUser & {
+//   feedingBlocks: FeedingBlock[];
+// };
 
 export {
   FeedingBlock,
   tFeedingEntryParams ,
   UserType,
   RegisterParams,
-  UserWithBlocks,
   IUser
 };
