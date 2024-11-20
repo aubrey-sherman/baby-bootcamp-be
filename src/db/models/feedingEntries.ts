@@ -5,6 +5,7 @@ import { feedingBlocks } from '../schema/feedingBlocks';
 import { feedingEntries } from '../schema/feedingEntries';
 import TimezoneHandler from '../../helpers/timezoneHandler';
 import { BadRequestError, NotFoundError } from '../../expressError';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 // Types
 export type FeedingEntryType = typeof feedingEntries.$inferSelect;
@@ -60,6 +61,7 @@ export class FeedingEntry {
   static async createInitialEntries(
     blockId: string,
     timezone: string,
+    tx: NodePgDatabase,
     options?: {
       monthsForward?: number;
     }
@@ -97,7 +99,7 @@ export class FeedingEntry {
     }));
 
     try {
-      const createdEntries = await db
+      const createdEntries = await tx
         .insert(feedingEntries)
         .values(entries)
         .returning();
