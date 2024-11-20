@@ -2,8 +2,12 @@
 import { DateTime } from 'luxon';
 
 /**
- * Methods related to handling timezone logic between local and UTC for database operations.
- * Converts user timezone dates to UTC for storage and handles date range calculations.
+ * Methods related to handling timezone logic between local and UTC for database
+ * operations.
+ *
+ * Converts user timezone dates to UTC for storage and handles date range
+ * calculations.
+ *
  * All methods return JavaScript Date objects compatible with database timestamps.
  */
 class TimeZoneHandler {

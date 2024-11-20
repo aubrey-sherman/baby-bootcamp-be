@@ -28,10 +28,9 @@ router.use(ensureLoggedIn);
 router.post('/blocks', async (req, res, next) => {
   try {
     const result = await FeedingBlock.createWithEntries({
-      number: req.body.number,
       isEliminating: req.body.isEliminating || false,
       username: res.locals.user.username,
-      timezone: req.headers['x-user-timezone'] as string || 'UTC'
+      timezone: req.headers['X-User-Timezone'] as string || 'UTC'
     });
 
     return res.status(201).json(result);
