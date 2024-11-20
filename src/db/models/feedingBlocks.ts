@@ -77,7 +77,6 @@ export class FeedingBlock {
 
   /** Creates a new block with initial feeding entries. */
   static async createWithEntries(data: {
-    number: number,
     isEliminating: boolean,
     username: string,
     timezone: string
@@ -85,19 +84,33 @@ export class FeedingBlock {
     block: typeof feedingBlocks.$inferSelect,
     entries: typeof feedingEntries.$inferSelect[]
   }> {
+    console.log("Before transaction")
     return await db.transaction(async (tx) => {
+
+      const [currentHighest] = await tx
+      .select({
+        maxNumber: sql<number>`COALESCE(MAX(${feedingBlocks.number}), 0)`
+      })
+      .from(feedingBlocks)
+      .where(eq(feedingBlocks.username, data.username));
+
+      const nextNumber = currentHighest.maxNumber + 1;
+
       const [block] = await tx
         .insert(feedingBlocks)
         .values({
-          number: data.number,
+          number: nextNumber,
           isEliminating: data.isEliminating,
           username: data.username
         })
         .returning();
 
+      console.log('Created block:', block); // Check if block.id exists
+
       const entries = await FeedingEntry.createInitialEntries(
         block.id,
-        data.timezone
+        data.timezone,
+        tx
       );
 
       return { block, entries };
