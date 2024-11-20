@@ -45,9 +45,7 @@ router.post("/", ensureLoggedIn, async function (req, res) {
 
 /** GET /[username] => { user }
  *
- * Returns { username, firstName, lastName, email, babyName, feedingBlocks[]}
- *
- * feedingBlocks[] will be undefined if none have been created yet.
+ * Returns { username, firstName, lastName, email, babyName }
  *
  * Authorization required: same user as :username in request params.
  **/
@@ -82,34 +80,29 @@ router.post("/", ensureLoggedIn, async function (req, res) {
 //     }
 //   });
 
-router.get("/:username", ensureMatchingUser, async function (req, res) {
+router.get("/:username", ensureMatchingUser, async function (req, res, next) {
   try {
     const { username } = req.params;
-    console.log('1. Route accessed for username:', username);
-    console.log('2. Token from request:', req.headers.authorization);
+    const user = await User.get(username);
 
-    const fetchedUser = await User.get(username);
-    console.log('3. Fetched user from database:', fetchedUser);
+    // const blocksResult = await db
+    //   .select()
+    //   .from(feedingBlocks)
+    //   .where(eq(feedingBlocks.username, username))
+    //   .execute();
+    // console.log('4. Fetched blocks:', blocksResult);
 
-    const blocksResult = await db
-      .select()
-      .from(feedingBlocks)
-      .where(eq(feedingBlocks.username, username))
-      .execute();
-    console.log('4. Fetched blocks:', blocksResult);
+    // const userWithBlocks = {
+    //   username: fetchedUser.username,
+    //   firstName: fetchedUser.firstName,
+    //   lastName: fetchedUser.lastName,
+    //   email: fetchedUser.email,
+    //   babyName: fetchedUser.babyName,
+    //   feedingBlocks: blocksResult || []
+    // };
+    // console.log('5. Assembled userWithBlocks:', userWithBlocks);
 
-    const userWithBlocks = {
-      username: fetchedUser.username,
-      firstName: fetchedUser.firstName,
-      lastName: fetchedUser.lastName,
-      email: fetchedUser.email,
-      babyName: fetchedUser.babyName,
-      feedingBlocks: blocksResult || []
-    };
-    console.log('5. Assembled userWithBlocks:', userWithBlocks);
-
-    res.json({ user: userWithBlocks });  // Make sure we're sending {user: ...}
-    console.log('6. Response sent');
+    res.json({ user })
   } catch (err) {
     console.error('Error in user route:', err);
     next(err);
