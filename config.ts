@@ -27,16 +27,6 @@ ${"Database:".yellow}           ${getDatabaseUri()}
 ---`);
 }
 
-// export const getDatabaseUri = () => {
-//   const dbUser = process.env.DB_USER || 'postgres';
-//   const dbPassword = process.env.DB_PASSWORD ? encodeURIComponent(process.env.DB_PASSWORD) : 'postgres';
-//   const dbHost = process.env.DB_HOST || 'localhost';
-//   const dbPort = process.env.DB_PORT || 5432;
-//   const dbName = process.env.DB_NAME || 'mydatabase';
-
-//   return `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}`;
-// };
-
 export {
   SECRET_KEY,
   PORT,
