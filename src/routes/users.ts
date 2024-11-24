@@ -2,16 +2,11 @@
 
 import jsonschema from "jsonschema";
 import { Router, Request, Response } from "express";
-import { db } from "../db/db.ts";
 import { ensureLoggedIn, ensureMatchingUser } from "../middleware/auth.ts";
-import { eq } from 'drizzle-orm';
 import User from '../db/models/user.ts';
-import { feedingBlocks } from "../db/schema/feedingBlocks.ts";
-import { IUser, UserWithBlocks, FeedingBlock } from '../types.ts';
 import { BadRequestError } from "../expressError.ts";
 import { createToken } from "../helpers/tokens.ts";
 import userNewSchema from '../jsonSchema/userNew.json';
-
 
 const router = Router();
 
@@ -49,58 +44,10 @@ router.post("/", ensureLoggedIn, async function (req, res) {
  *
  * Authorization required: same user as :username in request params.
  **/
-// router
-//   .get("/:username", ensureMatchingUser, async function (req, res) {
-//     try {
-//       const { username } = req.params;
-//       console.log('Fetching user:', username);
-
-//       const fetchedUser = await User.get(username);
-//       console.log('Fetched base user:', fetchedUser);
-
-//       const blocksResult = await db
-//         .select()
-//         .from(feedingBlocks)
-//         .where(eq(feedingBlocks.username, username))
-//         .execute();
-
-//         const userWithBlocks: UserWithBlocks = {
-//           username: fetchedUser.username,
-//           firstName: fetchedUser.firstName,
-//           lastName: fetchedUser.lastName,
-//           email: fetchedUser.email,
-//           babyName: fetchedUser.babyName,
-//           feedingBlocks: blocksResult || []
-//         };
-
-//       res.json({ user: userWithBlocks });
-//     } catch (err) {
-//       console.error('Error in user route:', err);
-//       next(err);
-//     }
-//   });
-
 router.get("/:username", ensureMatchingUser, async function (req, res, next) {
   try {
     const { username } = req.params;
     const user = await User.get(username);
-
-    // const blocksResult = await db
-    //   .select()
-    //   .from(feedingBlocks)
-    //   .where(eq(feedingBlocks.username, username))
-    //   .execute();
-    // console.log('4. Fetched blocks:', blocksResult);
-
-    // const userWithBlocks = {
-    //   username: fetchedUser.username,
-    //   firstName: fetchedUser.firstName,
-    //   lastName: fetchedUser.lastName,
-    //   email: fetchedUser.email,
-    //   babyName: fetchedUser.babyName,
-    //   feedingBlocks: blocksResult || []
-    // };
-    // console.log('5. Assembled userWithBlocks:', userWithBlocks);
 
     res.json({ user })
   } catch (err) {
