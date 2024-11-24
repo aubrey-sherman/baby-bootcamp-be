@@ -10,13 +10,9 @@ import { DateTime } from 'luxon';
  *
  * All methods return JavaScript Date objects compatible with database timestamps.
  */
-class TimeZoneHandler {
+class TimezoneHandler {
 
-  /** Converts a date from user's timezone to UTC
-   * @param date - Date or ISO string in user's timezone
-   * @param timezone - User's timezone (e.g., 'America/New_York')
-   * @returns Date object in UTC
-  */
+  /** Converts a date from user's timezone to UTC. */
   toUTC(date: Date | string, timezone: string): Date {
     const luxonDate = typeof date === 'string'
       ? DateTime.fromISO(date, { zone: timezone })
@@ -60,4 +56,4 @@ class TimeZoneHandler {
   }
 }
 
-export default TimeZoneHandler;
+export default TimezoneHandler;
