@@ -10,6 +10,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 // Types
 export type FeedingEntryType = typeof feedingEntries.$inferSelect;
 export type NewFeedingEntryType = typeof feedingEntries.$inferInsert;
+export type FeedingBlockType = typeof feedingBlocks.$inferSelect;
 
 interface DatabaseError extends Error {
   code?: string;
@@ -21,7 +22,8 @@ export class FeedingEntry {
 
   /**
    * Gets entries for week range, creating them if they don't exist.
-   * Returns existing entries if found, otherwise creates and returns new ones.
+   * Returns existing entries if found, otherwise creates and returns a complete
+   * set (7) of new entries for the week.
    */
   static async getOrCreateEntriesForWeek(
     blockId: string,
@@ -41,17 +43,81 @@ export class FeedingEntry {
         )
       );
 
-    // If entries exist, return them
-    if (existingEntries.length > 0) {
+    // If we have entries for every day of the week, return them
+    const daysInWeek = 7;
+    if (existingEntries.length === daysInWeek) {
       return existingEntries;
     }
 
-    // If no entries exist, create them
-    return await this.extendEntriesForward(
-      blockId,
-      weekStart,
-      timezone
-    );
+    // Get the most recent entry before this week to use its time
+    const previousEntry = await db
+      .select()
+      .from(feedingEntries)
+      .where(
+        and(
+          eq(feedingEntries.blockId, blockId),
+          lt(feedingEntries.feedingTime, weekStart)
+        )
+      )
+      .orderBy(feedingEntries.feedingTime, 'desc')
+      .limit(1);
+
+    // Get time components from previous entry or use default
+    let timePattern;
+    if (previousEntry.length > 0) {
+      const prevTime = DateTime.fromJSDate(previousEntry[0].feedingTime)
+        .setZone(timezone);
+      timePattern = {
+        hour: prevTime.hour,
+        minute: prevTime.minute,
+        second: 0,
+        millisecond: 0
+      };
+    } else {
+      // Default to noon if no previous entry
+      timePattern = {
+        hour: 12,
+        minute: 0,
+        second: 0,
+        millisecond: 0
+      };
+    }
+
+    // Create entries for any missing days
+    const entries = [];
+
+    for (let i = 0; i < daysInWeek; i++) {
+      const date = DateTime.fromJSDate(weekStart)
+        .setZone(timezone)
+        .plus({ days: i });
+
+      // Check if we already have an entry for this day
+      const existingEntry = existingEntries.find(entry =>
+        DateTime.fromJSDate(entry.feedingTime)
+          .setZone(timezone)
+          .hasSame(date, 'day')
+      );
+
+      if (existingEntry) {
+        entries.push(existingEntry);
+      } else {
+        // Use the time pattern from previous entry
+        const timeToUse = date.set(timePattern);
+
+        const newEntry = await db
+          .insert(feedingEntries)
+          .values({
+            blockId,
+            feedingTime: timeToUse.toUTC().toJSDate(),
+            completed: false
+          })
+          .returning();
+
+        entries.push(newEntry[0]);
+      }
+    }
+
+    return entries;
   }
 
   /**
@@ -72,7 +138,7 @@ export class FeedingEntry {
     // Calculate date range - start from today
     const startDate = DateTime.now()
       .setZone(timezone)
-      .startOf('day')
+      .startOf('week')
       .toJSDate();
 
     const endDate = DateTime.now()
@@ -230,13 +296,45 @@ export class FeedingEntry {
 
       return entries;
     } catch (error) {
-      console.error('Error fetching week entries:', error);
       throw new Error('Failed to fetch feeding entries');
     }
   }
 
-  // TODO: Update a feeding entry
-  // Columns that can accept updates: time, volumeInOunces, completed
+  /** Updates feeding time for all entries in a block.
+   *
+   * Returns a block with updated entries.
+   * Throws NotFoundError if block is not found.
+   */
+  static async updateAllEntryTimes(
+    blockId: string,
+    newTime: Date
+  ): Promise<FeedingBlockType & { feedingEntries: FeedingEntryType[] }> {
+    return await db.transaction(async (tx) => {
+      await tx.update(feedingEntries)
+        .set({ feedingTime: newTime })
+        .where(eq(feedingEntries.blockId, blockId));
 
-  // TODO: Delete a feeding entry
+      const result = await tx.select({
+        id: feedingBlocks.id,
+        number: feedingBlocks.number,
+        isEliminating: feedingBlocks.isEliminating,
+        username: feedingBlocks.username,
+      }).from(feedingBlocks)
+        .where(eq(feedingBlocks.id, blockId));
+
+      const entries = await tx.select()
+        .from(feedingEntries)
+        .where(eq(feedingEntries.blockId, blockId));
+
+      if (!result[0]) {
+        throw new NotFoundError(`Block not found: ${blockId}`);
+      }
+
+      return {
+        ...result[0],
+        feedingEntries: entries
+      };
+    });
+  }
+
 }

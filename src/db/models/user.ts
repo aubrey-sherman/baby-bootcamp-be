@@ -66,7 +66,6 @@ class User {
   static async register(
     { username, password, firstName, lastName, email, babyName }: RegisterParams
   ): Promise<IUser> {
-    console.debug('Backend register function running')
 
     const duplicateCheck = await db
       .select({ username: users.username })

@@ -1,5 +1,6 @@
 
 import { eq, and, sql, gt, gte, lt, inArray } from 'drizzle-orm';
+import { DateTime } from 'luxon';
 import { db } from '../db'
 import { feedingBlocks } from '../schema/feedingBlocks';
 import { feedingEntries } from '../schema/feedingEntries';
@@ -9,6 +10,7 @@ import { BadRequestError, NotFoundError } from '../../expressError';
 
 // Types
 type FeedingBlockType = typeof feedingBlocks.$inferSelect;
+type FeedingEntryType = typeof feedingEntries.$inferSelect;
 type NewFeedingBlockType = typeof feedingBlocks.$inferInsert;
 
 // FIXME: This repeats code and there should only be one sort of truth for a
@@ -70,7 +72,7 @@ export class FeedingBlock {
       if (dbError.code === '23505') { // Unique constraint violation
         throw new BadRequestError('Feeding block already exists');
       }
-      console.error('Create block error:', error); // Add logging
+      console.error('Create block error:', error);
       throw new BadRequestError('Failed to create feeding block');
     }
   }
@@ -84,7 +86,6 @@ export class FeedingBlock {
     block: typeof feedingBlocks.$inferSelect,
     entries: typeof feedingEntries.$inferSelect[]
   }> {
-    console.log("Before transaction")
     return await db.transaction(async (tx) => {
 
       const [currentHighest] = await tx
@@ -105,19 +106,30 @@ export class FeedingBlock {
         })
         .returning();
 
-      console.log('Created block:', block); // Check if block.id exists
+      // Get just this week's entries for the response
+      const weekStart = DateTime.now()
+        .setZone(data.timezone)
+        .startOf('week');
+      const weekEnd = DateTime.now()
+        .setZone(data.timezone)
+        .endOf('week');
 
-      const entries = await FeedingEntry.createInitialEntries(
+      const allEntries = await FeedingEntry.createInitialEntries(
         block.id,
         data.timezone,
         tx
       );
 
-      return { block, entries };
+      const thisWeeksEntries = allEntries.filter(entry => {
+        const entryDate = DateTime.fromJSDate(entry.feedingTime)
+          .setZone(data.timezone);
+
+        return entryDate >= weekStart && entryDate <= weekEnd;
+      });
+
+      return { block, entries: thisWeeksEntries };
     });
   }
-
-
 
   /**
    * Gets all feeding blocks for a user.
@@ -152,19 +164,15 @@ export class FeedingBlock {
     return block[0] || null;
   }
 
-   /**
-   * Gets all blocks for a user with their current entries.
+   /** Gets all blocks for a user with their current entries.
    * If there are no entries, the array for entries will be empty.
-   * @param username - The user's username
-   * @param startDate - Start of the date range for entries
-   * @param endDate - End of the date range for entries
    */
-  static async getBlocksWithEntries(
+  static async getOrCreateBlocksWithEntries(
     username: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    timezone: string
   ): Promise<BlockWithEntries[]> {
-
     const blocks = await db
       .select({
         id: feedingBlocks.id,
@@ -176,35 +184,25 @@ export class FeedingBlock {
       .where(eq(feedingBlocks.username, username))
       .orderBy(feedingBlocks.number);
 
-      if (!blocks.length) return [];
+    if (!blocks.length) return [];
 
-      // Get all entries for these blocks within date range
-    const entries = await db
-    .select()
-    .from(feedingEntries)
-    .where(
-      and(
-        inArray(feedingEntries.blockId, blocks.map(b => b.id)),
-        gte(feedingEntries.feedingTime, startDate),
-        lt(feedingEntries.feedingTime, endDate)
-      )
+    const blocksWithEntries = await Promise.all(
+      blocks.map(async (block) => {
+        const entries = await FeedingEntry.getOrCreateEntriesForWeek(
+          block.id,
+          startDate,
+          endDate,
+          timezone
+        );
+
+        return {
+          ...block,
+          feedingEntries: entries
+        }
+      })
     )
-    .orderBy(feedingEntries.feedingTime);
 
-    // Group entries by blockId
-    const entriesByBlock = entries.reduce((acc, entry) => {
-      if (!acc[entry.blockId]) {
-        acc[entry.blockId] = [];
-      }
-      acc[entry.blockId].push(entry);
-      return acc;
-    }, {} as Record<string, typeof entries>);
-
-    // Combine blocks with their entries
-    return blocks.map(block => ({
-      ...block,
-      feedingEntries: entriesByBlock[block.id] || []
-    }));
+    return blocksWithEntries;
   }
 
   /** Gets blocks a user with entries within a specified week. */
@@ -239,24 +237,6 @@ export class FeedingBlock {
     return blocks;
   }
 
-  // /** Find a specific block by ID */
-  // static async get(id: string, username: string): Promise<FeedingBlock> {
-  //   const [block] = await db
-  //     .select()
-  //     .from(feedingBlocks)
-  //     .where(and(
-  //       eq(feedingBlocks.id, id),
-  //       eq(feedingBlocks.username, username)
-  //     ));
-
-  //   if (!block) {
-  //     throw new NotFoundError(`No feeding block found with id: ${id}`);
-  //   }
-
-  //   return block;
-  // }
-
-
   /** Updates a feeding block. */
   static async updateIsEliminating(
     id: string,
@@ -284,6 +264,96 @@ export class FeedingBlock {
       if (error instanceof NotFoundError) throw error;
       throw new BadRequestError('Failed to update feeding block');
     }
+  }
+
+  /** Updates feeding time for all entries in a block.
+   *
+   * Returns a block with updated entries.
+   * Throws NotFoundError if block is not found.
+   */
+  static async updateAllEntryTimes(
+    blockId: string,
+    newTime: Date
+  ): Promise<FeedingBlockType & { feedingEntries: FeedingEntryType[] }> {
+    return await db.transaction(async (tx) => {
+      // Get the selected date's DateTime
+      const selectedDate = DateTime.fromJSDate(newTime);
+
+      // Get entries for this block where date is >= selected date
+      const entries = await tx
+        .select()
+        .from(feedingEntries)
+        .where(
+          and(
+            eq(feedingEntries.blockId, blockId),
+            gte(
+              feedingEntries.feedingTime,
+              selectedDate.startOf('day').toJSDate()  // Start of the selected day
+            )
+          )
+        );
+
+      const newHour = selectedDate.hour;
+      const newMinute = selectedDate.minute;
+      const newSecond = selectedDate.second;
+      const newMillisecond = selectedDate.millisecond;
+
+      // Update all matching entries
+      for (const entry of entries) {
+        const entryDate = DateTime.fromJSDate(entry.feedingTime);
+
+        const updatedDateTime = entryDate.set({
+          hour: newHour,
+          minute: newMinute,
+          second: newSecond,
+          millisecond: newMillisecond
+        });
+
+        await tx
+          .update(feedingEntries)
+          .set({ feedingTime: updatedDateTime.toJSDate() })
+          .where(eq(feedingEntries.id, entry.id));
+      }
+
+      // Get block
+      const [block] = await tx
+        .select({
+          id: feedingBlocks.id,
+          number: feedingBlocks.number,
+          isEliminating: feedingBlocks.isEliminating,
+          username: feedingBlocks.username,
+        })
+        .from(feedingBlocks)
+        .where(eq(feedingBlocks.id, blockId));
+
+      if (!block) {
+        throw new NotFoundError(`Block not found: ${blockId}`);
+      }
+
+      // Return only this week's entries in the response
+      const weekStart = DateTime.fromJSDate(newTime)
+        .startOf('week')
+        .toJSDate();
+      const weekEnd = DateTime.fromJSDate(newTime)
+        .endOf('week')
+        .toJSDate();
+
+      const thisWeeksEntries = await tx
+        .select()
+        .from(feedingEntries)
+        .where(
+          and(
+            eq(feedingEntries.blockId, blockId),
+            gte(feedingEntries.feedingTime, weekStart),
+            lt(feedingEntries.feedingTime, weekEnd)
+          )
+        );
+
+      return {
+        ...block,
+        feedingEntries: thisWeeksEntries
+      };
+    });
   }
 
   /** Deletes a feeding block and decrements the numbers of all blocks that had higher numbers. */
