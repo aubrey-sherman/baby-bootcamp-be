@@ -4,6 +4,8 @@ import { FeedingBlock } from '../db/models/feedingBlocks';
 import { FeedingEntry } from '../db/models/feedingEntries';
 import { ensureLoggedIn, authenticateJWT } from '../middleware/auth';
 import TimezoneHandler from '../helpers/timezoneHandler';
+import { BadRequestError } from '../expressError';
+import { time } from 'console';
 
 const router = express.Router();
 
@@ -136,17 +138,15 @@ router.get('/blocks', async (req, res, next) => {
   }
 });
 
-/**
- * Gets all blocks for a user with their entries for the specified date range.
- * Route: GET /feeding-routes/blocks/entries
+/** GET /feeding-routes/blocks/entries
+ *
+ * Gets blocks with entries for specified week range
  *
  * Query params:
- *  - startDate (optional): ISO date string, defaults to start of current week
- *  - endDate (optional): ISO date string, defaults to end of current week
+ *  - startDate: ISO date string
+ *  - endDate: ISO date string
  *
- * Required headers: X-User-Timezone
- *
- * Returns: Array of blocks with their associated entries
+ * Returns: { blocks: Array of blocks with their entries }
  */
 router.get('/blocks/entries', async (req, res, next) => {
   try {
@@ -162,10 +162,11 @@ router.get('/blocks/entries', async (req, res, next) => {
       ? new Date(req.query.endDate as string)
       : DateTime.now().setZone(timezone).endOf('week').toJSDate();
 
-    const blocksWithEntries = await FeedingBlock.getBlocksWithEntries(
+    const blocksWithEntries = await FeedingBlock.getOrCreateBlocksWithEntries(
       res.locals.user.username,
       startDate,
-      endDate
+      endDate,
+      timezone
     );
 
     return res.json({ blocks: blocksWithEntries });
@@ -187,7 +188,7 @@ router.get('/blocks/entries', async (req, res, next) => {
 router.get('/blocks/:blockId/entries', async (req, res, next) => {
   try {
     const { blockId } = req.params;
-    const timezone = req.headers['x-user-timezone'] as string || 'UTC';
+    const timezone = req.headers['X-User-Timezone'] as string || 'UTC';
     const tzHandler = new TimezoneHandler();
 
     // Get date range from query params or default to current week
@@ -224,28 +225,6 @@ router.get('/blocks/:blockId/entries', async (req, res, next) => {
   }
 });
 
-
-/** PATCH /feeding-blocks/:id - Update feeding block
- *
- * Authorization required: valid token
- *
- * Required fields: { isEliminating }
- *
- * Returns: { block: { id, number, isEliminating, username } }
-*/
-// router.patch('/blocks/:id', async (req, res, next) => {
-//   try {
-//     const block = await FeedingBlock.updateIsEliminating(
-//       req.params.id,
-//       res.locals.user.username,
-//       req.body.isEliminating
-//     );
-//     return res.json({ block });
-//   } catch (err) {
-//     return next(err);
-//   }
-// });
-
 /** DELETE /feeding-blocks/:id - Delete feeding block
  *
  * Authorization required: valid token
@@ -266,42 +245,62 @@ router.delete('/blocks/:id', async (req, res, next) => {
   }
 });
 
-// TODO: Implement static class method for updating
-/** PATCH /feeding-blocks/:blockId/entries/:id - Update entry
+/** PATCH /feeding-blocks/:blockId/feeding-time - Update time for all entries
+ * in a block.
  *
  * Authorization required: valid token
  *
- * Optional fields: { feedingTime, volumeInOunces }
+ * Required fields: { feedingTime }
  *
- * Returns: { entry: { id, feedingTime, volumeInOunces, blockId } }
+ * Returns block with entries as
+ *  { block: [{ id, feedingTime, volumeInOunces, blockId }], ... }
 */
-router.patch('/blocks/:blockId/entries/:id', async (req, res, next) => {
+router.patch('/blocks/:blockId/feeding-time', async (req, res, next) => {
+  const timezoneHandler = new TimezoneHandler();
+
   try {
-    // First verify the block belongs to the user
     await FeedingBlock.getOne(req.params.blockId, res.locals.user.username);
 
-    const updateData: {
-      feedingTime?: Date;
-      volumeInOunces?: number | null;
-    } = {};
-
-    if (req.body.feedingTime) {
-      updateData.feedingTime = new Date(req.body.feedingTime);
-    }
-    if (req.body.volumeInOunces !== undefined) {
-      updateData.volumeInOunces = req.body.volumeInOunces;
+    if (!req.body.feedingTime) {
+      throw new BadRequestError('Time is required for update');
     }
 
-    const entry = await FeedingEntry.update(
-      req.params.id,
+    const timezone = req.headers['x-user-timezone'];
+    if (!timezone || typeof timezone !== 'string') {
+     throw new BadRequestError('Timezone header required');
+    }
+
+    const newTime = timezoneHandler.toUTC(req.body.feedingTime, timezone)
+
+    const updatedBlock = await FeedingBlock.updateAllEntryTimes(
       req.params.blockId,
-      updateData
+      newTime
     );
-    return res.json({ entry });
-  } catch (err) {
-    return next(err);
-  }
-});
+
+    // Filter to just this week's entries before sending response
+    const weekStart = DateTime.now()
+      .setZone(timezone)
+      .startOf('week')
+    const weekEnd = DateTime.now()
+      .setZone(timezone)
+      .endOf('week')
+
+    const thisWeeksEntries = updatedBlock.feedingEntries.filter(entry => {
+      const entryDate = DateTime.fromJSDate(entry.feedingTime)
+        .setZone(timezone);
+      return entryDate >= weekStart && entryDate <= weekEnd;
+    });
+
+    return res.json({
+      block: {
+        ...updatedBlock,
+        feedingEntries: thisWeeksEntries
+      }
+    });
+    } catch (err) {
+      return next(err);
+    }
+  });
 
 // TODO:
 /** DELETE /feeding-blocks/:blockId/entries/:id - Delete entry
