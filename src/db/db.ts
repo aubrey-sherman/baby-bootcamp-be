@@ -1,6 +1,7 @@
 /* Database setup for Baby Bootcamp. */
 
 import 'dotenv/config';
+import { Pool } from 'pg';
 import { getDatabaseUri } from '../../config.ts';
 import { drizzle } from 'drizzle-orm/connect';
 
