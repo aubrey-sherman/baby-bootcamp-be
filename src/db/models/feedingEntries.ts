@@ -361,7 +361,20 @@ export class FeedingEntry {
         throw new NotFoundError(`Block not found: ${entry.blockId}`);
       }
 
+      if (block.isEliminating) {
+        console.log('Processing eliminating block:', {
+          blockId: block.id,
+          entryTime: entry.feedingTime,
+          newVolume,
+          hasStartDate: !!block.eliminationStartDate,
+          hasBaselineVolume: !!block.baselineVolume,
+          currentGroup: block.currentGroup
+        });
+
         if (!block.eliminationStartDate || block.baselineVolume === null || block.baselineVolume === 0) {
+          // First volume update for elimination
+          console.log('Initial elimination setup');
+
           // Set block values
           await tx
             .update(feedingBlocks)
@@ -390,6 +403,14 @@ export class FeedingEntry {
             0,
             block.baselineVolume - (currentGroup * 0.5)
           );
+
+          console.log('Calculating volume:', {
+            daysSinceStart,
+            currentGroup,
+            baselineVolume: block.baselineVolume,
+            expectedVolume,
+            newVolume
+          });
 
           // If new volume is lower, update baseline
           if (newVolume < expectedVolume) {
@@ -423,6 +444,8 @@ export class FeedingEntry {
           )
           .orderBy(feedingEntries.feedingTime);
 
+        console.log('Updating subsequent entries:', subsequentEntries.length);
+
         for (const subsequentEntry of subsequentEntries) {
           const daysSinceStart = BlockElimination.getDaysBetween(
             block.eliminationStartDate!,
@@ -440,22 +463,29 @@ export class FeedingEntry {
             currentBlock.baselineVolume! - (groupNumber * 0.5)
           );
 
+          console.log('Subsequent entry update:', {
+            entryId: subsequentEntry.id,
+            daysSinceStart,
+            groupNumber,
+            groupVolume
+          });
+
           await tx
             .update(feedingEntries)
             .set({ volumeInOunces: groupVolume })
             .where(eq(feedingEntries.id, subsequentEntry.id));
         }
       } else {
-        // Non-eliminating block - update this and all subsequent entries
-          await tx
-          .update(feedingEntries)
-          .set({ volumeInOunces: newVolume })
-          .where(
-            and(
-              eq(feedingEntries.blockId, block.id),
-              gte(feedingEntries.feedingTime, entry.feedingTime)
-            )
-          );
+        // Non-eliminating block - update this entry
+        await tx
+        .update(feedingEntries)
+        .set({ volumeInOunces: newVolume })
+        .where(
+          and(
+            eq(feedingEntries.blockId, block.id),
+            gte(feedingEntries.feedingTime, entry.feedingTime)
+          )
+        );
       }
 
       // Get final week's entries
