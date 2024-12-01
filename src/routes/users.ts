@@ -1,7 +1,7 @@
 /** Routes for users. */
 
 import jsonschema from "jsonschema";
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import { ensureLoggedIn, ensureMatchingUser } from "../middleware/auth.ts";
 import User from '../db/models/user.ts';
 import { BadRequestError } from "../expressError.ts";
@@ -9,6 +9,8 @@ import { createToken } from "../helpers/tokens.ts";
 import userNewSchema from '../jsonSchema/userNew.json';
 
 const router = Router();
+
+// TODO: Type errs
 
 /** POST / { user }  => { user, token }
  *
@@ -51,7 +53,6 @@ router.get("/:username", ensureMatchingUser, async function (req, res, next) {
 
     res.json({ user })
   } catch (err) {
-    console.error('Error in user route:', err);
     next(err);
   }
 });
