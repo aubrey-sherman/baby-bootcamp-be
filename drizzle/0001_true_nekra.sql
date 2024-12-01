@@ -1,0 +1,1 @@
+ALTER TABLE "feeding_blocks" ALTER COLUMN "baseline_volume" SET DATA TYPE double precision;
