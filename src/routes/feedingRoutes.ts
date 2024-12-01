@@ -5,7 +5,6 @@ import { FeedingEntry } from '../db/models/feedingEntries';
 import { ensureLoggedIn, authenticateJWT } from '../middleware/auth';
 import TimezoneHandler from '../helpers/timezoneHandler';
 import { BadRequestError } from '../expressError';
-import { time } from 'console';
 
 const router = express.Router();
 
@@ -85,10 +84,6 @@ router.post('/blocks/:blockId/entries', async (req, res, next) => {
  * Gets entries for a specific week. If entries don't exist for the requested week,
  * they are automatically created. This provides seamless calendar navigation without
  * requiring explicit entry creation.
- *
- * @param blockId - UUID of the feeding block
- * @query startDate - ISO date string for start of week
- * @header X-User-Timezone - User's timezone
  *
  * Returns: { entries: FeedingEntry[] }
  *
@@ -245,7 +240,62 @@ router.delete('/blocks/:id', async (req, res, next) => {
   }
 });
 
-/** PATCH /feeding-blocks/:blockId/feeding-time - Update time for all entries
+/** PATCH /blocks/:blockId - Update block's isEliminating status
+ *
+ * Authorization required: valid token
+ *
+ * Required fields: { isEliminating }
+ *
+ * Returns updated block with feedingEntries filtered to the current week
+*/
+router.patch('/blocks/:blockId', async (req, res, next) => {
+  const { blockId } = req.params;
+  const username = res.locals.user.username;
+
+  if (!req.body.isEliminating) {
+    throw new BadRequestError('Value required for update');
+  }
+
+  try {
+    const updatedBlock = await FeedingBlock.updateIsEliminating(
+      blockId,
+      username,
+      req.body.isEliminating
+    );
+
+    const timezone = req.headers['x-user-timezone'];
+    if (!timezone || typeof timezone !== 'string') {
+     throw new BadRequestError('Timezone header required');
+    }
+
+    const weekStart = DateTime.now()
+      .setZone(timezone)
+      .startOf('week')
+    const weekEnd = DateTime.now()
+      .setZone(timezone)
+      .endOf('week')
+
+    const weekEntries = await FeedingEntry.getEntriesForWeek(
+      username,
+      weekStart.toJSDate(),
+      weekEnd.toJSDate(),
+      blockId
+    );
+
+    return res.json({
+      block: {
+        ...updatedBlock,
+        feedingEntries: weekEntries
+      }
+  });
+
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+/** PATCH /blocks/:blockId/feeding-time - Update time for all entries
  * in a block.
  *
  * Authorization required: valid token
@@ -278,29 +328,89 @@ router.patch('/blocks/:blockId/feeding-time', async (req, res, next) => {
     );
 
     // Filter to just this week's entries before sending response
-    const weekStart = DateTime.now()
-      .setZone(timezone)
-      .startOf('week')
-    const weekEnd = DateTime.now()
-      .setZone(timezone)
-      .endOf('week')
+    const weekStart = DateTime.now().setZone(timezone).startOf('week');
+    const weekEnd = DateTime.now().setZone(timezone).endOf('week');
 
-    const thisWeeksEntries = updatedBlock.feedingEntries.filter(entry => {
-      const entryDate = DateTime.fromJSDate(entry.feedingTime)
-        .setZone(timezone);
-      return entryDate >= weekStart && entryDate <= weekEnd;
-    });
+    const weekEntries = await FeedingEntry.getEntriesForWeek(
+      res.locals.user.username,
+      weekStart.toJSDate(),
+      weekEnd.toJSDate(),
+      req.params.blockId
+    );
 
     return res.json({
       block: {
         ...updatedBlock,
-        feedingEntries: thisWeeksEntries
+        feedingEntries: weekEntries
       }
     });
     } catch (err) {
       return next(err);
     }
   });
+
+  /** POST - Set start date for elimination logic */
+  router.post('/blocks/:blockId/elimination', async (req, res, next) => {
+    const timezoneHandler = new TimezoneHandler();
+
+    try {
+      const { startDate, baselineVolume } = req.body;
+      const timezone = req.headers['x-user-timezone'];
+
+      if (!timezone || typeof timezone !== 'string') {
+        throw new BadRequestError('Timezone header required');
+      }
+
+      const utcStartDate = timezoneHandler.toUTC(startDate, timezone);
+      const weekStart = DateTime.now().setZone(timezone).startOf('week');
+      const weekEnd = DateTime.now().setZone(timezone).endOf('week');
+
+      const updatedBlock = await FeedingBlock.setEliminationStart(
+        req.params.blockId,
+        res.locals.user.username,
+        utcStartDate,
+        baselineVolume,
+        weekStart.toJSDate(),
+        weekEnd.toJSDate()
+      );
+
+      return res.json({ block: updatedBlock });
+    } catch (err) {
+      next(err);
+    }
+   });
+
+   /** Endpoint to handle two types of volume updates from the frontend:
+    * 1. For a non-eliminating block, updates volume and cascades to subsequent entries.
+    * 2. For eliminating blocks, volume becomes the new baseline for elimination logic.
+   */
+   router.patch('/entries/:entryId/volume', async (req, res, next) => {
+    try {
+      const timezone = req.headers['x-user-timezone'];
+      if (!timezone || typeof timezone !== 'string') {
+        throw new BadRequestError('Timezone header required');
+      }
+
+      const weekStart = DateTime.now()
+        .setZone(timezone)
+        .startOf('week');
+      const weekEnd = DateTime.now()
+        .setZone(timezone)
+        .endOf('week');
+
+      const updatedBlock = await FeedingEntry.updateEntryVolume(
+        req.params.entryId,
+        res.locals.user.username,
+        req.body.volumeInOunces,
+        weekStart.toJSDate(),
+        weekEnd.toJSDate()
+      );
+
+      return res.json({ block: updatedBlock });
+    } catch (err) {
+      next(err);
+    }
+   });
 
 // TODO:
 /** DELETE /feeding-blocks/:blockId/entries/:id - Delete entry
