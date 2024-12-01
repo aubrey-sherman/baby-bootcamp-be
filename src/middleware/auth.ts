@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { SECRET_KEY } from "../../config.ts";
+import { Request, Response, NextFunction } from 'express';
 import { UnauthorizedError } from "../expressError.ts";
 
 /** Middleware: Authenticate user.
@@ -9,7 +10,10 @@ import { UnauthorizedError } from "../expressError.ts";
  *
  * It's not an error if no token was provided or if the token is not valid.
  */
-function authenticateJWT(req, res, next) {
+function authenticateJWT(
+  req: Request,
+  res: Response,
+  next: NextFunction) {
   const authHeader = req.headers?.authorization;
   if (authHeader) {
     const token = authHeader.replace(/^[Bb]earer /, "").trim();
@@ -27,7 +31,10 @@ function authenticateJWT(req, res, next) {
  *
  * If no user is logged in, raises Unauthorized error.
  */
-function ensureLoggedIn(req, res, next) {
+function ensureLoggedIn(
+  req: Request,
+  res: Response,
+  next: NextFunction) {
   if (res.locals.user?.username) return next();
   throw new UnauthorizedError();
 }
@@ -39,7 +46,10 @@ function ensureLoggedIn(req, res, next) {
  *
  * Throws error to developers if there is no username in request params.
  */
-function ensureMatchingUser(req, res, next) {
+function ensureMatchingUser(
+  req: Request,
+  res: Response,
+  next: NextFunction) {
 
   const currentUser = res.locals.user;
 
