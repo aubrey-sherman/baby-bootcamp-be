@@ -19,9 +19,10 @@ const app = express();
 app.use(cors({
   origin: [
     'https://present-turtles.surge.sh',
-    // Add your local development URL if needed
-    'http://localhost:5173'
+    'http://localhost:5173'  // for local development
   ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-timezone'],
   credentials: true
 }));
 app.use(express.json());
