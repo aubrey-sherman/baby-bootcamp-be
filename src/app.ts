@@ -16,7 +16,6 @@ import morgan from "morgan";
 const app = express();
 
 // Middleware
-app.options('*', cors()) // enable pre-flight for all routes
 app.use(cors({
   origin: [
     'https://present-turtles.surge.sh',
@@ -26,6 +25,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'x-user-timezone'],
   credentials: true
 }));
+
+app.options('*', cors()); // enable pre-flight for all routes
+
 app.use(express.json());
 app.use(morgan("tiny"));
 app.use(authenticateJWT);
