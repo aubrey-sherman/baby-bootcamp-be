@@ -30,6 +30,12 @@ app.use(morgan("tiny"));
 app.use(authenticateJWT);
 app.use(express.urlencoded({ extended: true }));
 
+// Add near the top of your Express setup
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  next();
+});
+
 // Routes
 app.use("/auth", authRoutes);
 app.use("/users", usersRoutes);

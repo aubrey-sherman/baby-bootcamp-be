@@ -47,12 +47,16 @@ router.post("/token", async function (req, res, next) {
  * Authorization required: none
  */
 router.post("/register", async function (req, res, next) {
+  console.log("Register endpoint hit");
+  console.log("Request body:", req.body);
+
   const validator = jsonschema.validate(
     req.body,
     userRegisterSchema,
     { required: true },
   );
   if (!validator.valid) {
+    console.log("Validation failed:", validator.errors);
     const errs = validator.errors.map(e => e.stack);
     throw new BadRequestError(errs);
   }
