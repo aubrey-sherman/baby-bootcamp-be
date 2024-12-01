@@ -4,7 +4,10 @@ import {
   varchar,
   integer,
   boolean,
-  index
+  index,
+  numeric,
+  timestamp,
+  doublePrecision
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { users} from "./users"
@@ -16,10 +19,13 @@ export const feedingBlocks = pgTable('feeding_blocks', {
   isEliminating: boolean('is_eliminating').notNull().default(false),
   username: varchar('username', { length: 255 })
     .references(() => users.username, {
-      onDelete: "cascade", // If a user is deleted, delete their feeding blocks
-      onUpdate: "cascade", // If a user's username is updated, cascade the update
+      onDelete: "cascade",
+      onUpdate: "cascade",
     })
     .notNull(),
+  eliminationStartDate: timestamp('elimination_start_date', { mode: 'date' }),
+  baselineVolume: doublePrecision('baseline_volume'),
+  currentGroup: integer('current_group').default(0)
   },
   (table) => ({
     // Correctly reference the column object instead of a string
