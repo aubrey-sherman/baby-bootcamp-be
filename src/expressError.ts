@@ -5,10 +5,14 @@
  */
 
 class ExpressError extends Error {
-  constructor(message, status) {
-    super();
-    this.message = message;
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
     this.status = status;
+    // These two lines are needed for proper inheritance
+    Object.setPrototypeOf(this, ExpressError.prototype);
+    (this as any).status = status;
   }
 }
 
@@ -28,11 +32,25 @@ class UnauthorizedError extends ExpressError {
   }
 }
 
-/** 400 BAD REQUEST error. */
+/** 400 BAD REQUEST error.
+ * Handles both single strings and arrays of strings.
+ */
 
+// class BadRequestError extends ExpressError {
+//   constructor(message = "Bad Request") {
+//     super(message, 400);
+//   }
+// }
 class BadRequestError extends ExpressError {
-  constructor(message = "Bad Request") {
-    super(message, 400);
+  constructor(message: string | string[]) {
+    const finalMessage = Array.isArray(message)
+      ? message.join(", ")
+      : message;
+
+    super(finalMessage, 400);
+
+    // Maintain proper prototype chain
+    Object.setPrototypeOf(this, BadRequestError.prototype);
   }
 }
 

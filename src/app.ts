@@ -1,8 +1,8 @@
 // import "dotenv/config";
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 
-import { NotFoundError } from './expressError.ts';
+import { NotFoundError, ExpressError } from './expressError.ts';
 import dotenv from 'dotenv';
 import { authenticateJWT } from './middleware/auth.ts';
 import authRoutes from "./routes/auth.ts";
@@ -33,12 +33,6 @@ app.use(morgan("tiny"));
 app.use(authenticateJWT);
 app.use(express.urlencoded({ extended: true }));
 
-// Add near the top of your Express setup
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
-  next();
-});
-
 // Routes
 app.use("/auth", authRoutes);
 app.use("/users", usersRoutes);
@@ -50,7 +44,11 @@ app.use(function (req, res, next) {
 });
 
 /** Generic error handler; anything unhandled goes here. */
-app.use(function (err, req, res, next) {
+app.use(function (
+  err: ExpressError,
+  req: Request,
+  res: Response,
+  next: NextFunction) {
   if (process.env.NODE_ENV !== "test") console.error(err.stack);
   const status = err.status || 500;
   const message = err.message;
