@@ -1,11 +1,12 @@
-import { eq, and, gte, lt, between } from 'drizzle-orm';
+import { eq, and, gte, lt, gt, between, desc } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { db } from '../db';
 import { feedingBlocks } from '../schema/feedingBlocks';
 import { feedingEntries } from '../schema/feedingEntries';
+import BlockElimination from '../../helpers/blockElimination';
 import TimezoneHandler from '../../helpers/timezoneHandler';
-import { BadRequestError, NotFoundError } from '../../expressError';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { NotFoundError } from '../../expressError';
 
 // Types
 export type FeedingEntryType = typeof feedingEntries.$inferSelect;
@@ -59,7 +60,7 @@ export class FeedingEntry {
           lt(feedingEntries.feedingTime, weekStart)
         )
       )
-      .orderBy(feedingEntries.feedingTime, 'desc')
+      .orderBy(desc(feedingEntries.feedingTime))
       .limit(1);
 
     // Get time components from previous entry or use default
@@ -157,7 +158,6 @@ export class FeedingEntry {
         .toJSDate();
     }
 
-    // Use the static tzHandler
     const entries = dates.map(date => ({
       blockId,
       feedingTime: FeedingEntry.tzHandler.createFeedingTime(date, currentTime, timezone),
@@ -172,7 +172,6 @@ export class FeedingEntry {
 
       return createdEntries;
     } catch (error) {
-      console.error('Error creating initial entries:', error);
       throw new Error('Failed to create feeding entries');
     }
   }
@@ -294,47 +293,198 @@ export class FeedingEntry {
         .where(and(...whereConditions))
         .orderBy(feedingEntries.feedingTime);
 
+        if (blockId) {
+          const [block] = await db
+            .select()
+            .from(feedingBlocks)
+            .where(eq(feedingBlocks.id, blockId));
+
+        if (block.isEliminating) {
+          const updatedEntries = await Promise.all(entries.map(async entry => ({
+            ...entry,
+            volumeInOunces: await BlockElimination.calculateVolumeForTimeChange(
+              entry,
+              block,
+              entry.feedingTime
+            )
+          })));
+
+          return updatedEntries;
+        }
+      }
+
       return entries;
     } catch (error) {
       throw new Error('Failed to fetch feeding entries');
     }
   }
 
-  /** Updates feeding time for all entries in a block.
+  // TODO: Decompose this method for better testing and maintenance
+  /** Updates volume for an entry and handles cascading effects:
    *
-   * Returns a block with updated entries.
-   * Throws NotFoundError if block is not found.
-   */
-  static async updateAllEntryTimes(
-    blockId: string,
-    newTime: Date
+   * Sets elimination start date and baseline when first volume is set
+   * Updates all entries in first 3-day group with that volume
+   * For subsequent updates, uses BlockElimination logic
+   * Returns updated block with current week's entries
+   *
+   * Throws NotFoundError if entry not found.
+  */
+  static async updateEntryVolume(
+    entryId: string,
+    username: string,
+    newVolume: number,
+    weekStart: Date,
+    weekEnd: Date
   ): Promise<FeedingBlockType & { feedingEntries: FeedingEntryType[] }> {
     return await db.transaction(async (tx) => {
-      await tx.update(feedingEntries)
-        .set({ feedingTime: newTime })
-        .where(eq(feedingEntries.blockId, blockId));
-
-      const result = await tx.select({
-        id: feedingBlocks.id,
-        number: feedingBlocks.number,
-        isEliminating: feedingBlocks.isEliminating,
-        username: feedingBlocks.username,
-      }).from(feedingBlocks)
-        .where(eq(feedingBlocks.id, blockId));
-
-      const entries = await tx.select()
+      // Get entry and block
+      const [entry] = await tx
+        .select()
         .from(feedingEntries)
-        .where(eq(feedingEntries.blockId, blockId));
+        .where(eq(feedingEntries.id, entryId));
 
-      if (!result[0]) {
-        throw new NotFoundError(`Block not found: ${blockId}`);
+      if (!entry) {
+        throw new NotFoundError(`Entry not found: ${entryId}`);
+      }
+
+      const [block] = await tx
+        .select()
+        .from(feedingBlocks)
+        .where(
+          and(
+            eq(feedingBlocks.id, entry.blockId),
+            eq(feedingBlocks.username, username)
+          )
+        );
+
+      if (!block) {
+        throw new NotFoundError(`Block not found: ${entry.blockId}`);
+      }
+
+        if (!block.eliminationStartDate || block.baselineVolume === null || block.baselineVolume === 0) {
+          // Set block values
+          await tx
+            .update(feedingBlocks)
+            .set({
+              eliminationStartDate: entry.feedingTime,
+              baselineVolume: newVolume,
+              currentGroup: 0
+            })
+            .where(eq(feedingBlocks.id, block.id));
+
+          // Update current entry
+          await tx
+            .update(feedingEntries)
+            .set({ volumeInOunces: newVolume })
+            .where(eq(feedingEntries.id, entryId));
+
+        } else {
+          // Subsequent updates - check against elimination rules
+          const daysSinceStart = BlockElimination.getDaysBetween(
+            block.eliminationStartDate,
+            entry.feedingTime
+          );
+
+          const currentGroup = Math.floor(daysSinceStart / BlockElimination.GROUP_DAYS);
+          const expectedVolume = Math.max(
+            0,
+            block.baselineVolume - (currentGroup * 0.5)
+          );
+
+          // If new volume is lower, update baseline
+          if (newVolume < expectedVolume) {
+            await tx
+              .update(feedingBlocks)
+              .set({
+                baselineVolume: newVolume,
+                currentGroup: currentGroup
+              })
+              .where(eq(feedingBlocks.id, block.id));
+          } else {
+            newVolume = expectedVolume;
+          }
+
+          // Update current entry
+          await tx
+            .update(feedingEntries)
+            .set({ volumeInOunces: newVolume })
+            .where(eq(feedingEntries.id, entryId));
+        }
+
+        // In both cases, update subsequent entries
+        const subsequentEntries = await tx
+          .select()
+          .from(feedingEntries)
+          .where(
+            and(
+              eq(feedingEntries.blockId, block.id),
+              gt(feedingEntries.feedingTime, entry.feedingTime)
+            )
+          )
+          .orderBy(feedingEntries.feedingTime);
+
+        for (const subsequentEntry of subsequentEntries) {
+          const daysSinceStart = BlockElimination.getDaysBetween(
+            block.eliminationStartDate!,
+            subsequentEntry.feedingTime
+          );
+          const groupNumber = Math.floor(daysSinceStart / BlockElimination.GROUP_DAYS);
+          // Use current baselineVolume from block
+          const [currentBlock] = await tx
+            .select()
+            .from(feedingBlocks)
+            .where(eq(feedingBlocks.id, block.id));
+
+          const groupVolume = Math.max(
+            0,
+            currentBlock.baselineVolume! - (groupNumber * 0.5)
+          );
+
+          await tx
+            .update(feedingEntries)
+            .set({ volumeInOunces: groupVolume })
+            .where(eq(feedingEntries.id, subsequentEntry.id));
+        }
+      } else {
+        // Non-eliminating block - update this and all subsequent entries
+          await tx
+          .update(feedingEntries)
+          .set({ volumeInOunces: newVolume })
+          .where(
+            and(
+              eq(feedingEntries.blockId, block.id),
+              gte(feedingEntries.feedingTime, entry.feedingTime)
+            )
+          );
+      }
+
+      // Get final week's entries
+      const weekEntries = await tx
+        .select()
+        .from(feedingEntries)
+        .where(
+          and(
+            eq(feedingEntries.blockId, block.id),
+            gte(feedingEntries.feedingTime, weekStart),
+            lt(feedingEntries.feedingTime, weekEnd)
+          )
+        )
+        .orderBy(feedingEntries.feedingTime);
+
+      // Get final block state
+      const [updatedBlock] = await tx
+        .select()
+        .from(feedingBlocks)
+        .where(eq(feedingBlocks.id, block.id));
+
+      if (!updatedBlock) {
+        throw new Error('Failed to retrieve updated block');
       }
 
       return {
-        ...result[0],
-        feedingEntries: entries
+        ...updatedBlock,
+        feedingEntries: weekEntries
       };
     });
   }
-
 }
