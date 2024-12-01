@@ -5,6 +5,7 @@ import { db } from '../db'
 import { feedingBlocks } from '../schema/feedingBlocks';
 import { feedingEntries } from '../schema/feedingEntries';
 import { FeedingEntry } from './feedingEntries';
+import BlockElimination from '../../helpers/blockElimination';
 import { BadRequestError, NotFoundError } from '../../expressError';
 
 
@@ -36,6 +37,20 @@ interface DatabaseError extends Error {
 /** Related functions for feeding blocks. */
 export class FeedingBlock {
 
+  /** Gets a block from its id. */
+  static async getBlock(blockId: string): Promise<FeedingBlockType> {
+    const [block] = await db
+      .select()
+      .from(feedingBlocks)
+      .where(eq(feedingBlocks.id, blockId));
+
+    if (!block) {
+      throw new NotFoundError(`Block not found: ${blockId}`);
+    }
+
+    return block;
+  }
+
   /** Creates a feeding block. */
   static async create({
     username,
@@ -58,7 +73,7 @@ export class FeedingBlock {
         .insert(feedingBlocks)
         .values({
           username,
-          number: nextNumber,  // Add the number field
+          number: nextNumber,
           isEliminating
         } satisfies NewFeedingBlockType)
         .returning();
@@ -72,7 +87,6 @@ export class FeedingBlock {
       if (dbError.code === '23505') { // Unique constraint violation
         throw new BadRequestError('Feeding block already exists');
       }
-      console.error('Create block error:', error);
       throw new BadRequestError('Failed to create feeding block');
     }
   }
@@ -102,7 +116,10 @@ export class FeedingBlock {
         .values({
           number: nextNumber,
           isEliminating: data.isEliminating,
-          username: data.username
+          username: data.username,
+          eliminationStartDate: null,
+          baselineVolume: null,
+          currentGroup: 0
         })
         .returning();
 
@@ -237,7 +254,138 @@ export class FeedingBlock {
     return blocks;
   }
 
-  /** Updates a feeding block. */
+  /** Updates feeding time for all entries in a block.
+   *
+   * Returns a block with updated entries.
+   * Throws NotFoundError if block is not found.
+   */
+  static async updateAllEntryTimes(
+    blockId: string,
+    newTime: Date
+  ): Promise<FeedingBlockType & { feedingEntries: FeedingEntryType[] }> {
+    return await db.transaction(async (tx) => {
+      // Get block first to check elimination status
+      const [block] = await tx
+        .select()
+        .from(feedingBlocks)
+        .where(eq(feedingBlocks.id, blockId));
+
+      if (!block) {
+        throw new NotFoundError(`Block not found: ${blockId}`);
+      }
+
+      const selectedDate = DateTime.fromJSDate(newTime);
+      const entries = await tx
+        .select()
+        .from(feedingEntries)
+        .where(
+          and(
+            eq(feedingEntries.blockId, blockId),
+            gte(
+              feedingEntries.feedingTime,
+              selectedDate.startOf('day').toJSDate()
+            )
+          )
+        );
+
+      const newHour = selectedDate.hour;
+      const newMinute = selectedDate.minute;
+      const newSecond = selectedDate.second;
+      const newMillisecond = selectedDate.millisecond;
+
+      // Update entries
+      for (const entry of entries) {
+        const entryDate = DateTime.fromJSDate(entry.feedingTime);
+        const updatedDateTime = entryDate.set({
+          hour: newHour,
+          minute: newMinute,
+          second: newSecond,
+          millisecond: newMillisecond
+        });
+
+        let updatedVolume = entry.volumeInOunces;
+        if (block.isEliminating) {
+          updatedVolume = await BlockElimination.calculateVolumeForTimeChange(
+            entry,
+            block,
+            updatedDateTime.toJSDate()
+          );
+        }
+
+        await tx
+          .update(feedingEntries)
+          .set({
+            feedingTime: updatedDateTime.toJSDate(),
+            volumeInOunces: updatedVolume
+          })
+          .where(eq(feedingEntries.id, entry.id));
+      }
+
+      // Get this week's entries
+      const weekStart = selectedDate.startOf('week').toJSDate();
+      const weekEnd = selectedDate.endOf('week').toJSDate();
+
+      const thisWeeksEntries = await tx
+        .select()
+        .from(feedingEntries)
+        .where(
+          and(
+            eq(feedingEntries.blockId, blockId),
+            gte(feedingEntries.feedingTime, weekStart),
+            lt(feedingEntries.feedingTime, weekEnd)
+          )
+        );
+
+      return {
+        ...block,
+        feedingEntries: thisWeeksEntries
+      };
+    });
+  }
+
+  /** Sets the start date to handle decrementing feeding amount.
+   *
+   * Returns updated block with entries filtered for current week.
+  */
+  static async setEliminationStart(
+    blockId: string,
+    username: string,
+    startDate: Date,
+    baselineVolume: number,
+    weekStart: Date,
+    weekEnd: Date
+  ): Promise<FeedingBlock> {
+    const [updatedBlock] = await db
+      .update(feedingBlocks)
+      .set({
+        eliminationStartDate: startDate,
+        baselineVolume: baselineVolume,
+        currentGroup: 0
+      })
+      .where(
+        and(
+          eq(feedingBlocks.id, blockId),
+          eq(feedingBlocks.username, username)
+        )
+      )
+      .returning();
+
+    if (!updatedBlock) throw new NotFoundError();
+
+    const entries = await FeedingEntry.getEntriesForWeek(
+      username,
+      weekStart,
+      weekEnd,
+      blockId
+    );
+
+    return {
+      ...updatedBlock,
+      feedingEntries: entries
+    };
+  }
+
+  /** Updates a feeding block's eliminating status. */
   static async updateIsEliminating(
     id: string,
     username: string,
@@ -266,94 +414,19 @@ export class FeedingBlock {
     }
   }
 
-  /** Updates feeding time for all entries in a block.
-   *
-   * Returns a block with updated entries.
-   * Throws NotFoundError if block is not found.
-   */
-  static async updateAllEntryTimes(
+  /** Updates baseline for decrementing feeding volume when eliminating. */
+  static async updateBaseline(
     blockId: string,
-    newTime: Date
-  ): Promise<FeedingBlockType & { feedingEntries: FeedingEntryType[] }> {
-    return await db.transaction(async (tx) => {
-      // Get the selected date's DateTime
-      const selectedDate = DateTime.fromJSDate(newTime);
-
-      // Get entries for this block where date is >= selected date
-      const entries = await tx
-        .select()
-        .from(feedingEntries)
-        .where(
-          and(
-            eq(feedingEntries.blockId, blockId),
-            gte(
-              feedingEntries.feedingTime,
-              selectedDate.startOf('day').toJSDate()  // Start of the selected day
-            )
-          )
-        );
-
-      const newHour = selectedDate.hour;
-      const newMinute = selectedDate.minute;
-      const newSecond = selectedDate.second;
-      const newMillisecond = selectedDate.millisecond;
-
-      // Update all matching entries
-      for (const entry of entries) {
-        const entryDate = DateTime.fromJSDate(entry.feedingTime);
-
-        const updatedDateTime = entryDate.set({
-          hour: newHour,
-          minute: newMinute,
-          second: newSecond,
-          millisecond: newMillisecond
-        });
-
-        await tx
-          .update(feedingEntries)
-          .set({ feedingTime: updatedDateTime.toJSDate() })
-          .where(eq(feedingEntries.id, entry.id));
-      }
-
-      // Get block
-      const [block] = await tx
-        .select({
-          id: feedingBlocks.id,
-          number: feedingBlocks.number,
-          isEliminating: feedingBlocks.isEliminating,
-          username: feedingBlocks.username,
-        })
-        .from(feedingBlocks)
-        .where(eq(feedingBlocks.id, blockId));
-
-      if (!block) {
-        throw new NotFoundError(`Block not found: ${blockId}`);
-      }
-
-      // Return only this week's entries in the response
-      const weekStart = DateTime.fromJSDate(newTime)
-        .startOf('week')
-        .toJSDate();
-      const weekEnd = DateTime.fromJSDate(newTime)
-        .endOf('week')
-        .toJSDate();
-
-      const thisWeeksEntries = await tx
-        .select()
-        .from(feedingEntries)
-        .where(
-          and(
-            eq(feedingEntries.blockId, blockId),
-            gte(feedingEntries.feedingTime, weekStart),
-            lt(feedingEntries.feedingTime, weekEnd)
-          )
-        );
-
-      return {
-        ...block,
-        feedingEntries: thisWeeksEntries
-      };
-    });
+    newBaseline: number,
+    currentGroup: number
+  ): Promise<void> {
+    await db
+      .update(feedingBlocks)
+      .set({
+        baselineVolume: newBaseline,
+        currentGroup: currentGroup
+      })
+      .where(eq(feedingBlocks.id, blockId));
   }
 
   /** Deletes a feeding block and decrements the numbers of all blocks that had higher numbers. */
