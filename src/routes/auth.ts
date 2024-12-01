@@ -11,8 +11,6 @@ import { BadRequestError } from "../expressError.js";
 
 const router = Router();
 
-// TODO: Type error array
-
 
 /** POST /auth/token:  { username, password } => { token }
  *
@@ -40,7 +38,7 @@ router.post("/token", async function (req, res, next) {
 
 /** POST /auth/register:   { user } => { token }
  *
- * user must include { username, password, firstName, lastName, email }
+ * User must include { username, password, firstName, lastName, email }
  *
  * Returns JWT token which can be used to authenticate further requests.
  *

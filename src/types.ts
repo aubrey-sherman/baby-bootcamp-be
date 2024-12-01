@@ -11,6 +11,7 @@ type UserType = {
   lastName: string;
   email: string;
   babyName: string;
+  isAdmin?: boolean;
 };
 
 interface IUser {
@@ -46,5 +47,5 @@ export {
   tFeedingEntryParams ,
   UserType,
   RegisterParams,
-  IUser
+  IUser,
 };

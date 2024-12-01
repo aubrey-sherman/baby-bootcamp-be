@@ -7,10 +7,9 @@ import User from '../db/models/user.ts';
 import { BadRequestError } from "../expressError.ts";
 import { createToken } from "../helpers/tokens.ts";
 import userNewSchema from '../jsonSchema/userNew.json';
+import { UserType } from "../types.ts";
 
 const router = Router();
-
-// TODO: Type errs
 
 /** POST / { user }  => { user, token }
  *
