@@ -16,6 +16,7 @@ import morgan from "morgan";
 const app = express();
 
 // Middleware
+app.options('*', cors()) // enable pre-flight for all routes
 app.use(cors({
   origin: [
     'https://present-turtles.surge.sh',
