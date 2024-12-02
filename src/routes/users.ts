@@ -6,7 +6,7 @@ import { ensureLoggedIn, ensureMatchingUser } from "../middleware/auth.js";
 import User from '../db/models/user.js';
 import { BadRequestError } from "../expressError.js";
 import { createToken } from "../helpers/tokens.js";
-import userNewSchema from '../jsonSchema/userNew.json';
+import userNewSchema from '../jsonSchema/userNew.json' assert { type: 'json' };
 
 const router = express.Router();
 

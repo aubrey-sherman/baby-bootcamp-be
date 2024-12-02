@@ -1,18 +1,17 @@
 {
   "compilerOptions": {
-      "target": "ES2021",
-      "strict": true,
-      "module": "ESNext",
-      "skipLibCheck": true,
-      "resolveJsonModule": true,
-      "esModuleInterop": true,
-      "moduleResolution": "Node",
-      "allowSyntheticDefaultImports": true,
-      "noEmit": true,
-      "allowImportingTsExtensions": true,
-      "forceConsistentCasingInFileNames": true
+    "target": "ES2021",
+    "strict": true,
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
-  // TODO: Check if below is necessary
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }
