@@ -6,15 +6,13 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "allowImportingTsExtensions": false,
     "noEmit": false,
     "outDir": "./dist",
-    "typeRoots": [
-      "node_modules/@types"
-    ]
+    "moduleResolution": "node",
+    "typeRoots": ["./node_modules/@types"]
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
