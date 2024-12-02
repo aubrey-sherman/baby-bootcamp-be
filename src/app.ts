@@ -49,6 +49,16 @@ app.use("/auth", authRoutes);
 app.use("/users", usersRoutes);
 app.use("/feeding-routes", feedingRoutes);
 
+app.get("/", (req, res) => {
+  console.log("Root route hit");
+  res.json({ message: "Server is running" });
+});
+
+app.get("/test", (req, res) => {
+  console.log("Test route hit");
+  res.json({ message: "Test route working" });
+});
+
 /** Handle 404 errors -- this matches everything */
 app.use(function (req, res, next) {
   throw new NotFoundError();
