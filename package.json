@@ -2,10 +2,11 @@
   "name": "rithmschool-start-js-express",
   "version": "1.0.0",
   "homepage": "https://github.com/rithmschool/start/",
-  "main": "./src/server.ts",
+  "main": "./dist/server.js",
   "type": "module",
   "scripts": {
-    "start": "npx tsx src/server.ts",
+    "start": "node dist/server.js",
+    "dev": "npx tsx src/server.ts",
     "build": "tsc",
     "test": "vitest",
     "test:cov": "vitest --coverage"
