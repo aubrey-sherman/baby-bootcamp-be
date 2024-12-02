@@ -2,12 +2,12 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 
-import { NotFoundError, ExpressError } from './expressError.ts';
 import dotenv from 'dotenv';
-import { authenticateJWT } from './middleware/auth.ts';
-import authRoutes from "./routes/auth.ts";
-import feedingRoutes from './routes/feedingRoutes.ts'
-import usersRoutes from './routes/users.ts';
+import { NotFoundError, ExpressError } from './expressError.js';
+import { authenticateJWT } from './middleware/auth.js';
+import authRoutes from "./routes/auth.js";
+import feedingRoutes from './routes/feedingRoutes.js'
+import usersRoutes from './routes/users.js';
 
 dotenv.config();
 

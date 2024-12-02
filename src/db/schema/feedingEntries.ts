@@ -1,6 +1,6 @@
 import { pgTable, uuid, doublePrecision, timestamp, index, boolean } from "drizzle-orm/pg-core";
 import { sql } from 'drizzle-orm';
-import { feedingBlocks } from "./feedingBlocks.ts";
+import { feedingBlocks } from "./feedingBlocks.js";
 
 /** Represents a feeding entry associated with a block. */
 export const feedingEntries = pgTable("feeding_entries", {

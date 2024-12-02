@@ -1,6 +1,6 @@
-import { FeedingBlock } from '../db/models/feedingBlocks';
-import {feedingBlocks } from '../db/schema/feedingBlocks';
-import { feedingEntries } from '../db/schema/feedingEntries';
+import { FeedingBlock } from '../db/models/feedingBlocks.js';
+import {feedingBlocks } from '../db/schema/feedingBlocks.js';
+import { feedingEntries } from '../db/schema/feedingEntries.js';
 
 interface EliminationRules {
   startDate: Date;

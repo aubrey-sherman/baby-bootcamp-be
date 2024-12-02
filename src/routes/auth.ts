@@ -3,8 +3,8 @@
 import jsonschema from "jsonschema";
 import { Router } from "express";
 
-import User from '../db/models/user.ts';
-import { createToken } from "../helpers/tokens.ts";
+import User from '../db/models/user.js';
+import { createToken } from "../helpers/tokens.js";
 import userAuthSchema from '../jsonSchema/userAuth.json';
 import userRegisterSchema from '../jsonSchema/userRegister.json';
 import { BadRequestError } from "../expressError.js";

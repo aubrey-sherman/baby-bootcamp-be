@@ -10,7 +10,7 @@ import {
   doublePrecision
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import { users} from "./users"
+import { users} from "./users.js"
 
 /* Represents a feeding block associated with a user. */
 export const feedingBlocks = pgTable('feeding_blocks', {

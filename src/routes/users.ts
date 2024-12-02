@@ -2,12 +2,11 @@
 
 import jsonschema from "jsonschema";
 import { Router } from "express";
-import { ensureLoggedIn, ensureMatchingUser } from "../middleware/auth.ts";
-import User from '../db/models/user.ts';
-import { BadRequestError } from "../expressError.ts";
-import { createToken } from "../helpers/tokens.ts";
+import { ensureLoggedIn, ensureMatchingUser } from "../middleware/auth.js";
+import User from '../db/models/user.js';
+import { BadRequestError } from "../expressError.js";
+import { createToken } from "../helpers/tokens.js";
 import userNewSchema from '../jsonSchema/userNew.json';
-import { UserType } from "../types.ts";
 
 const router = Router();
 

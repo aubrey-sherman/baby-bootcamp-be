@@ -1,10 +1,10 @@
 import express from 'express';
 import { DateTime } from 'luxon';
-import { FeedingBlock } from '../db/models/feedingBlocks';
-import { FeedingEntry } from '../db/models/feedingEntries';
-import { ensureLoggedIn, authenticateJWT } from '../middleware/auth';
-import TimezoneHandler from '../helpers/timezoneHandler';
-import { BadRequestError } from '../expressError';
+import { FeedingBlock } from '../db/models/feedingBlocks.js';
+import { FeedingEntry } from '../db/models/feedingEntries.js';
+import { ensureLoggedIn, authenticateJWT } from '../middleware/auth.js';
+import TimezoneHandler from '../helpers/timezoneHandler.js';
+import { BadRequestError } from '../expressError.js';
 
 const router = express.Router();
 

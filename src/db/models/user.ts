@@ -1,17 +1,16 @@
 import bcrypt from 'bcrypt';
 import 'dotenv/config';
 import { eq } from 'drizzle-orm';
-import { users } from '../schema/users.ts'
+import { users } from '../schema/users.js'
 
-import { db } from "../db.ts";
+import { db } from "../db.js";
 import {
   BadRequestError,
   NotFoundError,
   UnauthorizedError,
 } from '../../expressError.ts';
-import { IUser, RegisterParams } from '../../types.ts';
-import { BCRYPT_WORK_FACTOR } from "../../../config";
-import { feedingBlocks } from '../schema/feedingBlocks.ts';
+import { IUser, RegisterParams } from '../../types.js';
+import { BCRYPT_WORK_FACTOR } from "../../../config.js";
 
 /** Related functions for users. */
 

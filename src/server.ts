@@ -1,4 +1,4 @@
-import app from "./app.ts";
+import app from "./app.js";
 
 const port = process.env.PORT || 3001;
 
