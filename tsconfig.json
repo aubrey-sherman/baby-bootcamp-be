@@ -11,7 +11,10 @@
     "forceConsistentCasingInFileNames": true,
     "allowImportingTsExtensions": false,
     "noEmit": false,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "typeRoots": [
+      "node_modules/@types"
+    ]
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
