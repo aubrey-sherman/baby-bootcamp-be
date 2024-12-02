@@ -17,10 +17,12 @@ const app = express();
 
 app.use(cors({
   origin: 'https://present-turtles.surge.sh',
-  credentials: true
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-timezone'],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
-
-app.options('*', cors()); // enable pre-flight for all routes
 
 app.use(express.json());
 app.use(morgan("tiny"));
