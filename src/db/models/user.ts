@@ -10,7 +10,7 @@ import {
   UnauthorizedError,
 } from '../../expressError.js';
 import { IUser, RegisterParams } from '../../types.js';
-import { BCRYPT_WORK_FACTOR } from "../../../config.js";
+import { BCRYPT_WORK_FACTOR } from "../../config.js";
 
 /** Related functions for users. */
 

@@ -2,7 +2,7 @@
 
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/connect';
-import { getDatabaseUri } from '../../config.js';
+import { getDatabaseUri } from '../config.js';
 
 const databaseUri = getDatabaseUri();
 

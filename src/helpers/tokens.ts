@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import  { SECRET_KEY } from "../../config.js";
+import  { SECRET_KEY } from "../config.js";
 import { UserType } from "../types.js";
 
 
