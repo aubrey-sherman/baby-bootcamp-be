@@ -16,28 +16,16 @@ import morgan from "morgan";
 const app = express();
 
 app.use(cors({
-  origin: 'https://present-turtles.surge.sh',
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-timezone'],
+  origin: "https://present-turtles.surge.sh",
   credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  methods: "GET,OPTIONS,PATCH,DELETE,POST,PUT",
+  allowedHeaders: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, x-user-timezone"
 }));
 
 app.use(express.json());
 app.use(morgan("tiny"));
 app.use(authenticateJWT);
 app.use(express.urlencoded({ extended: true }));
-
-// app.get("/ping", (req, res) => {
-//   console.log("Ping route hit");
-//   res.json({ message: "pong" });
-// });
-
-// app.get("/", (req, res) => {
-//   console.log("Root route hit");
-//   res.json({ message: "Server is running" });
-// });
 
 // Routes
 app.use("/auth", authRoutes);
@@ -48,11 +36,6 @@ app.get("/", (req, res) => {
   console.log("Root route hit");
   res.json({ message: "Server is running" });
 });
-
-// app.get("/test", (req, res) => {
-//   console.log("Test route hit");
-//   res.json({ message: "Test route working" });
-// });
 
 /** Handle 404 errors -- this matches everything */
 app.use(function (req, res, next) {
