@@ -1,31 +1,20 @@
 {
-  "headers": [
+  "version": 2,
+  "routes": [
     {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "https://present-turtles.surge.sh"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, x-user-timezone"
-        },
-        {
-          "key": "Access-Control-Allow-Credentials",
-          "value": "true"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
+      "src": "/(.*)",
+      "methods": ["OPTIONS"],
+      "headers": {
+        "Access-Control-Allow-Origin": "https://present-turtles.surge.sh",
+        "Access-Control-Allow-Methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, x-user-timezone",
+        "Access-Control-Allow-Credentials": "true"
+      },
+      "status": 204
+    },
     {
-      "source": "/(.*)",
-      "destination": "/dist/server.js"
+      "src": "/(.*)",
+      "dest": "/dist/server.js"
     }
   ],
   "outputDirectory": "dist"
