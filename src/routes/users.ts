@@ -1,14 +1,14 @@
 /** Routes for users. */
 
 import jsonschema from "jsonschema";
-import { Router } from "express";
+import express from "express";
 import { ensureLoggedIn, ensureMatchingUser } from "../middleware/auth.js";
 import User from '../db/models/user.js';
 import { BadRequestError } from "../expressError.js";
 import { createToken } from "../helpers/tokens.js";
 import userNewSchema from '../jsonSchema/userNew.json';
 
-const router = Router();
+const router = express.Router();
 
 /** POST / { user }  => { user, token }
  *

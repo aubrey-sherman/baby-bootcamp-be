@@ -44,6 +44,11 @@ app.use(morgan("tiny"));
 app.use(authenticateJWT);
 app.use(express.urlencoded({ extended: true }));
 
+app.get("/ping", (req, res) => {
+  console.log("Ping route hit");
+  res.json({ message: "pong" });
+});
+
 // Routes
 app.use("/auth", authRoutes);
 app.use("/users", usersRoutes);

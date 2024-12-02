@@ -1,7 +1,7 @@
 /** Routes for authentication. */
 
 import jsonschema from "jsonschema";
-import { Router } from "express";
+import express from "express";
 
 import User from '../db/models/user.js';
 import { createToken } from "../helpers/tokens.js";
@@ -9,7 +9,7 @@ import userAuthSchema from '../jsonSchema/userAuth.json';
 import userRegisterSchema from '../jsonSchema/userRegister.json';
 import { BadRequestError } from "../expressError.js";
 
-const router = Router();
+const router = express.Router();
 
 
 /** POST /auth/token:  { username, password } => { token }
