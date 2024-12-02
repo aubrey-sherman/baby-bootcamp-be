@@ -6,8 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "npx tsx src/server.ts",
-    "build": "tsc",
+    "build": "tsc && cp -r src/jsonSchema dist/",
     "test": "vitest",
     "test:cov": "vitest --coverage"
   },
