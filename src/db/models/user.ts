@@ -8,7 +8,7 @@ import {
   BadRequestError,
   NotFoundError,
   UnauthorizedError,
-} from '../../expressError.ts';
+} from '../../expressError.js';
 import { IUser, RegisterParams } from '../../types.js';
 import { BCRYPT_WORK_FACTOR } from "../../../config.js";
 
