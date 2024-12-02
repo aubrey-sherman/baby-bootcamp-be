@@ -17,10 +17,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: [
-    'https://present-turtles.surge.sh',
-    'http://localhost:5173'  // for local development
-  ],
+  origin: 'https://present-turtles.surge.sh',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-user-timezone'],
   credentials: true

@@ -28,5 +28,8 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/src/server.ts" }
   ]
 }
