@@ -6,7 +6,14 @@ import { ensureLoggedIn, ensureMatchingUser } from "../middleware/auth.js";
 import User from '../db/models/user.js';
 import { BadRequestError } from "../expressError.js";
 import { createToken } from "../helpers/tokens.js";
-import userNewSchema from '../jsonSchema/userNew.json' assert { type: 'json' };
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const userNewSchema = JSON.parse(
+  readFileSync(join(__dirname, '../jsonSchema/userNew.json'), 'utf8')
+);
 
 const router = express.Router();
 

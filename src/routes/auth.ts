@@ -3,11 +3,21 @@
 import jsonschema from "jsonschema";
 import express from "express";
 
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
 import User from '../db/models/user.js';
 import { createToken } from "../helpers/tokens.js";
-import userAuthSchema from '../jsonSchema/userAuth.json' assert { type: 'json' };
-import userRegisterSchema from '../jsonSchema/userRegister.json' assert { type: 'json' };
 import { BadRequestError } from "../expressError.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const userAuthSchema = JSON.parse(
+  readFileSync(join(__dirname, '../jsonSchema/userAuth.json'), 'utf8')
+);
+const userRegisterSchema = JSON.parse(
+  readFileSync(join(__dirname, '../jsonSchema/userRegister.json'), 'utf8')
+);
 
 const router = express.Router();
 
