@@ -25,7 +25,8 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/src/server.ts"
+      "destination": "/dist/server.js"
     }
-  ]
+  ],
+  "outputDirectory": "dist"
 }
