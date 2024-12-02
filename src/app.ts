@@ -16,10 +16,7 @@ import morgan from "morgan";
 const app = express();
 
 app.use(cors({
-  origin: "https://present-turtles.surge.sh",
-  credentials: true,
-  methods: "GET,OPTIONS,PATCH,DELETE,POST,PUT",
-  allowedHeaders: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, x-user-timezone"
+  origin: process.env.CORS_ALLOW_ORIGIN?.split(',') || ['https://baby-bootcamp-fe.surge.sh']
 }));
 
 app.use(express.json());
