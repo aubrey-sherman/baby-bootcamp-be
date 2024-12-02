@@ -15,13 +15,27 @@ import morgan from "morgan";
 
 const app = express();
 
-// Middleware
+app.use((req, res, next) => {
+  console.log('Incoming request:', {
+    method: req.method,
+    path: req.path,
+    origin: req.headers.origin
+  });
+  next();
+});
+
 app.use(cors({
   origin: 'https://present-turtles.surge.sh',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-user-timezone'],
   credentials: true
 }));
+
+// After CORS middleware
+app.use((req, res, next) => {
+  console.log('After CORS middleware');
+  next();
+});
 
 app.options('*', cors()); // enable pre-flight for all routes
 
