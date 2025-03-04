@@ -18,6 +18,7 @@ class BlockElimination {
   static DECREMENT = 0.5;
   static GROUP_DAYS = 3;
 
+  /*TODO: Add documentation*/
   static getDaysBetween(start: Date, end: Date): number {
     const startDate = new Date(start);
     startDate.setHours(0, 0, 0, 0);
@@ -27,6 +28,7 @@ class BlockElimination {
     return Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   }
 
+  /* TODO: Write code for function */
   static async calculateVolumeForTimeChange(entry: FeedingEntryType, block: FeedingBlockType, newTime: Date): Promise<number> {
     if (!block.eliminationStartDate || !block.baselineVolume) {
       return entry.volumeInOunces ?? 0;
