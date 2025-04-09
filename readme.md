@@ -1,4 +1,12 @@
-**README WIP**
+## Baby Bootcamp
+
+Baby Bootcamp is a companion tool to support parents who follow Suzy Giordano's popular sleep-training method outlined in Twelve Hours' Sleep by Twelve Weeks Old: A Step-by-Step Plan for Baby Sleep Success.
+
+The app automates the tracking and calculations needed to gradually eliminate night feedings, making it easier for (likely sleep-deprived!) parents to implement this critical component of Giordano's sleep plan.
+
+*Feature highlights and demo coming soon*
+
+Back-End Tech Stack: Express.js, PostgreSQL, Drizzle ORM
 
 ### How to run the app locally
 
