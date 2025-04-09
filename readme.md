@@ -4,7 +4,7 @@ Baby Bootcamp is a companion tool to support parents who follow Suzy Giordano's 
 
 The app automates the tracking and calculations needed to gradually eliminate night feedings, making it easier for (likely sleep-deprived!) parents to implement this critical component of Giordano's sleep plan.
 
-*Feature highlights and demo coming soon*
+The backend application is a JSON-returning API.
 
 Back-End Tech Stack: Express.js, PostgreSQL, Drizzle ORM
 
