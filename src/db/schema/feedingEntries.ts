@@ -10,8 +10,8 @@ export const feedingEntries = pgTable("feeding_entries", {
   completed: boolean('completed').default(false).notNull(),
   blockId: uuid('block_id')
       .references(() => feedingBlocks.id, {
-        onDelete: "cascade", // If a feeding block is deleted, delete its entries
-        onUpdate: "cascade", // If a feeding block's ID is updated, cascade the update
+        onDelete: "cascade",
+        onUpdate: "cascade",
       })
       .notNull(),
   },
