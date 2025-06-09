@@ -1,4 +1,5 @@
-
+import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { User } from '../models/user.js';
 
 // test that authentication works
 
