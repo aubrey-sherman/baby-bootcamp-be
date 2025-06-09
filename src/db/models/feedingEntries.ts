@@ -84,7 +84,6 @@ export class FeedingEntry {
       };
     }
 
-    // Create entries for any missing days
     const entries = [];
 
     for (let i = 0; i < daysInWeek; i++) {
@@ -92,7 +91,6 @@ export class FeedingEntry {
         .setZone(timezone)
         .plus({ days: i });
 
-      // Check if we already have an entry for this day
       const existingEntry = existingEntries.find(entry =>
         DateTime.fromJSDate(entry.feedingTime)
           .setZone(timezone)
@@ -136,7 +134,6 @@ export class FeedingEntry {
 
     const currentTime = new Date();
 
-    // Calculate date range - start from today
     const startDate = DateTime.now()
       .setZone(timezone)
       .startOf('week')
@@ -148,7 +145,6 @@ export class FeedingEntry {
       .endOf('day')
       .toJSDate();
 
-    // Generate all dates in the range
     const dates: Date[] = [];
     let currentDate = startDate;
     while (currentDate <= endDate) {
