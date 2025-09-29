@@ -11,6 +11,8 @@
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
     "resolveJsonModule": true,
+    "lib": ["ES2020"],
+    "types": ["node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
