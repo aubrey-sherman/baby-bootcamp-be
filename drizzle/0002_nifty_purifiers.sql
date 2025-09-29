@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD CONSTRAINT "email" CHECK (position('@' IN email) > 1);

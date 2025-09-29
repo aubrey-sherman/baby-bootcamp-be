@@ -15,6 +15,13 @@
       "when": 1732918900924,
       "tag": "0001_true_nekra",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759167933961,
+      "tag": "0002_nifty_purifiers",
+      "breakpoints": true
     }
   ]
 }
