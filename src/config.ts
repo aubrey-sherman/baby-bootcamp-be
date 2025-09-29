@@ -7,12 +7,19 @@ dotenv.config();
 const SECRET_KEY = process.env.SECRET_KEY || "secret-agent-dev";
 const PORT = process.env.PORT || 3001;
 
-// Use dev database, testing database, or via env var, production database
+// Use appropriate database based on NODE_ENV
 function getDatabaseUri() {
-  return (process.env.NODE_ENV === "test")
-    ? "postgresql:///baby_bootcamp_test"
-    : process.env.DATABASE_URL || "postgresql:///baby_bootcamp";
+  if (process.env.NODE_ENV === "test") {
+    return "postgresql:///baby_bootcamp_test";
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    return process.env.PRODUCTION_DATABASE_URL || "postgresql:///baby_bootcamp";
+  }
+
+  return process.env.LOCAL_DATABASE_URL || "postgresql:///baby_bootcamp";
 }
+
 // Speed up bcrypt during tests, since the algorithm safety isn't being tested
 const BCRYPT_WORK_FACTOR = process.env.NODE_ENV === "test" ? 1 : 12;
 
