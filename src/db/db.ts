@@ -1,11 +1,16 @@
 /* Database setup for Baby Bootcamp. */
 
 import 'dotenv/config';
-import { drizzle } from 'drizzle-orm/connect';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
 import { getDatabaseUri } from '../config.js';
 
 const databaseUri = getDatabaseUri();
 
-const db = await drizzle("node-postgres", databaseUri!);
+const pool = new Pool({
+  connectionString: databaseUri,
+});
+
+const db = drizzle(pool);
 
 export { db };
